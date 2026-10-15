@@ -1,0 +1,1137 @@
+{
+ "$defs": {
+  "Account": {
+   "properties": {
+    "key": {
+     "title": "Key",
+     "type": "string"
+    },
+    "account_id": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Account Id"
+    },
+    "account_nm": {
+     "title": "Account Nm",
+     "type": "string"
+    },
+    "sj_div": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Sj Div"
+    },
+    "basis": {
+     "title": "Basis",
+     "type": "string"
+    },
+    "current": {
+     "title": "Current",
+     "type": "integer"
+    },
+    "prior": {
+     "title": "Prior",
+     "type": "integer"
+    },
+    "delta": {
+     "title": "Delta",
+     "type": "integer"
+    },
+    "yoy_pct": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Yoy Pct"
+    },
+    "is_key": {
+     "title": "Is Key",
+     "type": "boolean"
+    },
+    "flags": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Flags",
+     "type": "array"
+    },
+    "robust_z": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Robust Z"
+    },
+    "peer_n": {
+     "title": "Peer N",
+     "type": "integer"
+    }
+   },
+   "required": [
+    "key",
+    "account_id",
+    "account_nm",
+    "sj_div",
+    "basis",
+    "current",
+    "prior",
+    "delta",
+    "yoy_pct",
+    "is_key",
+    "flags",
+    "robust_z",
+    "peer_n"
+   ],
+   "title": "Account",
+   "type": "object"
+  },
+  "Attempt": {
+   "properties": {
+    "attempt": {
+     "title": "Attempt",
+     "type": "integer"
+    },
+    "status": {
+     "title": "Status",
+     "type": "string"
+    },
+    "reason": {
+     "title": "Reason",
+     "type": "string"
+    },
+    "statement": {
+     "title": "Statement",
+     "type": "string"
+    },
+    "fault_injected": {
+     "default": false,
+     "title": "Fault Injected",
+     "type": "boolean"
+    }
+   },
+   "required": [
+    "attempt",
+    "status",
+    "reason",
+    "statement"
+   ],
+   "title": "Attempt",
+   "type": "object"
+  },
+  "ChangeItem": {
+   "properties": {
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "section_key": {
+     "title": "Section Key",
+     "type": "string"
+    },
+    "section_path": {
+     "title": "Section Path",
+     "type": "string"
+    },
+    "edit_type": {
+     "enum": [
+      "신설",
+      "삭제",
+      "수치 수정",
+      "표현 수정"
+     ],
+     "title": "Edit Type",
+     "type": "string"
+    },
+    "topic": {
+     "enum": [
+      "위험·소송",
+      "사업·시장",
+      "거래",
+      "기타"
+     ],
+     "title": "Topic",
+     "type": "string"
+    },
+    "summary": {
+     "title": "Summary",
+     "type": "string"
+    },
+    "summary_before_rewrite": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Summary Before Rewrite"
+    },
+    "old": {
+     "items": {
+      "$ref": "#/$defs/ParaRef"
+     },
+     "title": "Old",
+     "type": "array"
+    },
+    "new": {
+     "items": {
+      "$ref": "#/$defs/ParaRef"
+     },
+     "title": "New",
+     "type": "array"
+    },
+    "similarity": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Similarity"
+    },
+    "diff": {
+     "items": {
+      "$ref": "#/$defs/DiffOp"
+     },
+     "title": "Diff",
+     "type": "array"
+    },
+    "numbers": {
+     "items": {
+      "$ref": "#/$defs/NumberChange"
+     },
+     "title": "Numbers",
+     "type": "array"
+    },
+    "importance": {
+     "title": "Importance",
+     "type": "number"
+    },
+    "in_target_section": {
+     "title": "In Target Section",
+     "type": "boolean"
+    },
+    "flags": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Flags",
+     "type": "array"
+    },
+    "duplicates": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Duplicates",
+     "type": "array"
+    },
+    "verification": {
+     "$ref": "#/$defs/Verification"
+    }
+   },
+   "required": [
+    "id",
+    "section_key",
+    "section_path",
+    "edit_type",
+    "topic",
+    "summary",
+    "old",
+    "new",
+    "similarity",
+    "diff",
+    "numbers",
+    "importance",
+    "in_target_section",
+    "flags",
+    "duplicates",
+    "verification"
+   ],
+   "title": "ChangeItem",
+   "type": "object"
+  },
+  "Check": {
+   "properties": {
+    "name": {
+     "title": "Name",
+     "type": "string"
+    },
+    "status": {
+     "enum": [
+      "pass",
+      "fail",
+      "warn"
+     ],
+     "title": "Status",
+     "type": "string"
+    },
+    "detail": {
+     "default": "",
+     "title": "Detail",
+     "type": "string"
+    }
+   },
+   "required": [
+    "name",
+    "status"
+   ],
+   "title": "Check",
+   "type": "object"
+  },
+  "DiffOp": {
+   "properties": {
+    "op": {
+     "enum": [
+      "eq",
+      "ins",
+      "del"
+     ],
+     "title": "Op",
+     "type": "string"
+    },
+    "text": {
+     "title": "Text",
+     "type": "string"
+    }
+   },
+   "required": [
+    "op",
+    "text"
+   ],
+   "title": "DiffOp",
+   "type": "object"
+  },
+  "Filing": {
+   "properties": {
+    "rcept_no": {
+     "title": "Rcept No",
+     "type": "string"
+    },
+    "report_nm": {
+     "title": "Report Nm",
+     "type": "string"
+    },
+    "rcept_dt": {
+     "title": "Rcept Dt",
+     "type": "string"
+    },
+    "bsns_year": {
+     "title": "Bsns Year",
+     "type": "integer"
+    },
+    "reprt_code": {
+     "title": "Reprt Code",
+     "type": "string"
+    },
+    "url": {
+     "title": "Url",
+     "type": "string"
+    }
+   },
+   "required": [
+    "rcept_no",
+    "report_nm",
+    "rcept_dt",
+    "bsns_year",
+    "reprt_code",
+    "url"
+   ],
+   "title": "Filing",
+   "type": "object"
+  },
+  "Meta": {
+   "properties": {
+    "analysis_id": {
+     "title": "Analysis Id",
+     "type": "string"
+    },
+    "request_uid": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Request Uid"
+    },
+    "created_at": {
+     "title": "Created At",
+     "type": "string"
+    },
+    "company": {
+     "additionalProperties": true,
+     "title": "Company",
+     "type": "object"
+    },
+    "current": {
+     "$ref": "#/$defs/Filing"
+    },
+    "prior": {
+     "$ref": "#/$defs/Filing"
+    },
+    "source": {
+     "title": "Source",
+     "type": "string"
+    },
+    "fs_div": {
+     "title": "Fs Div",
+     "type": "string"
+    },
+    "embedder": {
+     "title": "Embedder",
+     "type": "string"
+    },
+    "llm": {
+     "title": "Llm",
+     "type": "string"
+    },
+    "pipeline_version": {
+     "title": "Pipeline Version",
+     "type": "string"
+    },
+    "graph_engine": {
+     "title": "Graph Engine",
+     "type": "string"
+    },
+    "demo_fault_injection": {
+     "title": "Demo Fault Injection",
+     "type": "boolean"
+    },
+    "sample_data": {
+     "title": "Sample Data",
+     "type": "boolean"
+    },
+    "disclaimer": {
+     "title": "Disclaimer",
+     "type": "string"
+    }
+   },
+   "required": [
+    "analysis_id",
+    "request_uid",
+    "created_at",
+    "company",
+    "current",
+    "prior",
+    "source",
+    "fs_div",
+    "embedder",
+    "llm",
+    "pipeline_version",
+    "graph_engine",
+    "demo_fault_injection",
+    "sample_data",
+    "disclaimer"
+   ],
+   "title": "Meta",
+   "type": "object"
+  },
+  "NodeRun": {
+   "properties": {
+    "node": {
+     "title": "Node",
+     "type": "string"
+    },
+    "label": {
+     "title": "Label",
+     "type": "string"
+    },
+    "round": {
+     "title": "Round",
+     "type": "integer"
+    },
+    "started_ms": {
+     "title": "Started Ms",
+     "type": "integer"
+    },
+    "ended_ms": {
+     "title": "Ended Ms",
+     "type": "integer"
+    },
+    "status": {
+     "enum": [
+      "ok",
+      "rejected",
+      "error"
+     ],
+     "title": "Status",
+     "type": "string"
+    },
+    "note": {
+     "title": "Note",
+     "type": "string"
+    }
+   },
+   "required": [
+    "node",
+    "label",
+    "round",
+    "started_ms",
+    "ended_ms",
+    "status",
+    "note"
+   ],
+   "title": "NodeRun",
+   "type": "object"
+  },
+  "NumberChange": {
+   "properties": {
+    "old": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Old"
+    },
+    "new": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "New"
+    }
+   },
+   "required": [
+    "old",
+    "new"
+   ],
+   "title": "NumberChange",
+   "type": "object"
+  },
+  "ParaRef": {
+   "properties": {
+    "pid": {
+     "description": "인용 ID: {rcept_no}:{섹션 키}:{해시 8자리}",
+     "title": "Pid",
+     "type": "string"
+    },
+    "section_path": {
+     "title": "Section Path",
+     "type": "string"
+    },
+    "text": {
+     "title": "Text",
+     "type": "string"
+    },
+    "sentence": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Sentence"
+    }
+   },
+   "required": [
+    "pid",
+    "section_path",
+    "text"
+   ],
+   "title": "ParaRef",
+   "type": "object"
+  },
+  "ParseStats": {
+   "properties": {
+    "rcept_no": {
+     "title": "Rcept No",
+     "type": "string"
+    },
+    "files": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Files",
+     "type": "array"
+    },
+    "chosen_file": {
+     "title": "Chosen File",
+     "type": "string"
+    },
+    "encoding_declared": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Encoding Declared"
+    },
+    "encoding_used": {
+     "title": "Encoding Used",
+     "type": "string"
+    },
+    "mode": {
+     "enum": [
+      "strict",
+      "recover"
+     ],
+     "title": "Mode",
+     "type": "string"
+    },
+    "amp_fixed": {
+     "title": "Amp Fixed",
+     "type": "integer"
+    },
+    "cr_fixed": {
+     "title": "Cr Fixed",
+     "type": "integer"
+    },
+    "fake_tags_escaped": {
+     "title": "Fake Tags Escaped",
+     "type": "integer"
+    },
+    "cell_counts": {
+     "additionalProperties": {
+      "type": "integer"
+     },
+     "title": "Cell Counts",
+     "type": "object"
+    },
+    "sections": {
+     "title": "Sections",
+     "type": "integer"
+    },
+    "paragraphs": {
+     "title": "Paragraphs",
+     "type": "integer"
+    },
+    "tables": {
+     "title": "Tables",
+     "type": "integer"
+    },
+    "warnings": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Warnings",
+     "type": "array"
+    }
+   },
+   "required": [
+    "rcept_no",
+    "files",
+    "chosen_file",
+    "encoding_declared",
+    "encoding_used",
+    "mode",
+    "amp_fixed",
+    "cr_fixed",
+    "fake_tags_escaped",
+    "cell_counts",
+    "sections",
+    "paragraphs",
+    "tables",
+    "warnings"
+   ],
+   "title": "ParseStats",
+   "type": "object"
+  },
+  "Relation": {
+   "properties": {
+    "account_key": {
+     "title": "Account Key",
+     "type": "string"
+    },
+    "account_nm": {
+     "title": "Account Nm",
+     "type": "string"
+    },
+    "direction": {
+     "enum": [
+      "증가",
+      "감소",
+      "변동 없음"
+     ],
+     "title": "Direction",
+     "type": "string"
+    },
+    "yoy_pct": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Yoy Pct"
+    },
+    "current": {
+     "title": "Current",
+     "type": "integer"
+    },
+    "prior": {
+     "title": "Prior",
+     "type": "integer"
+    },
+    "level": {
+     "enum": [
+      "인과 명시",
+      "관련 맥락",
+      "확인 불가"
+     ],
+     "title": "Level",
+     "type": "string"
+    },
+    "statement": {
+     "title": "Statement",
+     "type": "string"
+    },
+    "statement_before_rewrite": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Statement Before Rewrite"
+    },
+    "reason_clause": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Reason Clause"
+    },
+    "why": {
+     "title": "Why",
+     "type": "string"
+    },
+    "evidence": {
+     "items": {
+      "$ref": "#/$defs/ParaRef"
+     },
+     "title": "Evidence",
+     "type": "array"
+    },
+    "numeric_claims": {
+     "items": {
+      "additionalProperties": true,
+      "type": "object"
+     },
+     "title": "Numeric Claims",
+     "type": "array"
+    },
+    "verification": {
+     "$ref": "#/$defs/Verification"
+    },
+    "attempts": {
+     "items": {
+      "$ref": "#/$defs/Attempt"
+     },
+     "title": "Attempts",
+     "type": "array"
+    }
+   },
+   "required": [
+    "account_key",
+    "account_nm",
+    "direction",
+    "yoy_pct",
+    "current",
+    "prior",
+    "level",
+    "statement",
+    "reason_clause",
+    "why",
+    "evidence",
+    "numeric_claims",
+    "verification",
+    "attempts"
+   ],
+   "title": "Relation",
+   "type": "object"
+  },
+  "Review": {
+   "properties": {
+    "status": {
+     "enum": [
+      "검토 대기",
+      "승인됨",
+      "수정 요청"
+     ],
+     "title": "Status",
+     "type": "string"
+    },
+    "reviewer": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Reviewer"
+    },
+    "decided_at": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Decided At"
+    },
+    "comment": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Comment"
+    },
+    "events": {
+     "items": {
+      "$ref": "#/$defs/ReviewEvent"
+     },
+     "title": "Events",
+     "type": "array"
+    }
+   },
+   "required": [
+    "status",
+    "events"
+   ],
+   "title": "Review",
+   "type": "object"
+  },
+  "ReviewEvent": {
+   "properties": {
+    "at": {
+     "title": "At",
+     "type": "string"
+    },
+    "actor": {
+     "title": "Actor",
+     "type": "string"
+    },
+    "action": {
+     "title": "Action",
+     "type": "string"
+    },
+    "item_id": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Item Id"
+    },
+    "detail": {
+     "default": "",
+     "title": "Detail",
+     "type": "string"
+    }
+   },
+   "required": [
+    "at",
+    "actor",
+    "action"
+   ],
+   "title": "ReviewEvent",
+   "type": "object"
+  },
+  "TableCell": {
+   "properties": {
+    "row": {
+     "title": "Row",
+     "type": "string"
+    },
+    "column": {
+     "title": "Column",
+     "type": "string"
+    },
+    "old": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Old"
+    },
+    "new": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "New"
+    },
+    "kind": {
+     "enum": [
+      "changed",
+      "row_added",
+      "row_removed"
+     ],
+     "title": "Kind",
+     "type": "string"
+    }
+   },
+   "required": [
+    "row",
+    "column",
+    "old",
+    "new",
+    "kind"
+   ],
+   "title": "TableCell",
+   "type": "object"
+  },
+  "TableChange": {
+   "properties": {
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "section_key": {
+     "title": "Section Key",
+     "type": "string"
+    },
+    "section_path": {
+     "title": "Section Path",
+     "type": "string"
+    },
+    "title": {
+     "title": "Title",
+     "type": "string"
+    },
+    "unit": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Unit"
+    },
+    "old_id": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Old Id"
+    },
+    "new_id": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "New Id"
+    },
+    "cells": {
+     "items": {
+      "$ref": "#/$defs/TableCell"
+     },
+     "title": "Cells",
+     "type": "array"
+    },
+    "note": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Note"
+    }
+   },
+   "required": [
+    "id",
+    "section_key",
+    "section_path",
+    "title",
+    "unit",
+    "old_id",
+    "new_id",
+    "cells",
+    "note"
+   ],
+   "title": "TableChange",
+   "type": "object"
+  },
+  "Verification": {
+   "properties": {
+    "status": {
+     "enum": [
+      "통과",
+      "재작성 후 통과",
+      "반려",
+      "검토 필요"
+     ],
+     "title": "Status",
+     "type": "string"
+    },
+    "checks": {
+     "items": {
+      "$ref": "#/$defs/Check"
+     },
+     "title": "Checks",
+     "type": "array"
+    },
+    "judge": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Judge"
+    }
+   },
+   "required": [
+    "status",
+    "checks"
+   ],
+   "title": "Verification",
+   "type": "object"
+  }
+ },
+ "properties": {
+  "meta": {
+   "$ref": "#/$defs/Meta"
+  },
+  "parse": {
+   "additionalProperties": {
+    "$ref": "#/$defs/ParseStats"
+   },
+   "title": "Parse",
+   "type": "object"
+  },
+  "accounts": {
+   "items": {
+    "$ref": "#/$defs/Account"
+   },
+   "title": "Accounts",
+   "type": "array"
+  },
+  "changes": {
+   "items": {
+    "$ref": "#/$defs/ChangeItem"
+   },
+   "title": "Changes",
+   "type": "array"
+  },
+  "tables": {
+   "items": {
+    "$ref": "#/$defs/TableChange"
+   },
+   "title": "Tables",
+   "type": "array"
+  },
+  "relations": {
+   "items": {
+    "$ref": "#/$defs/Relation"
+   },
+   "title": "Relations",
+   "type": "array"
+  },
+  "timeline": {
+   "items": {
+    "$ref": "#/$defs/NodeRun"
+   },
+   "title": "Timeline",
+   "type": "array"
+  },
+  "review": {
+   "$ref": "#/$defs/Review"
+  },
+  "metrics": {
+   "additionalProperties": true,
+   "title": "Metrics",
+   "type": "object"
+  }
+ },
+ "required": [
+  "meta",
+  "parse",
+  "accounts",
+  "changes",
+  "tables",
+  "relations",
+  "timeline",
+  "review",
+  "metrics"
+ ],
+ "title": "Report",
+ "type": "object"
+}

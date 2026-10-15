@@ -1,0 +1,10 @@
+pydantic>=2.6
+requests>=2.31
+lxml>=5.0
+numpy>=1.26
+scikit-learn>=1.4
+fastapi>=0.110
+uvicorn>=0.29
+langgraph>=0.2
+# 선택: KURE-v1 / Qwen3 임베딩 (RADAR_EMBEDDER=kure | qwen3)
+# sentence-transformers>=3.0
