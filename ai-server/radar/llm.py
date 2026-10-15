@@ -16,9 +16,9 @@ from typing import Callable, Literal
 import requests
 from pydantic import BaseModel, ValidationError
 
-from .classify import rule_summary, topic_of
-from .relate import compose
-from .verify import rule_judge, rule_rewrite
+from radar.diff.classify import rule_summary, topic_of
+from radar.evidence.relate import compose
+from radar.evidence.verify import rule_judge, rule_rewrite
 
 MARK = "ˆ"
 

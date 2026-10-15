@@ -1,8 +1,8 @@
 package com.gongsiradar;
 
-import com.gongsiradar.audit.AuditService;
-import com.gongsiradar.common.Hashing;
-import com.gongsiradar.common.RequestContext;
+import com.gongsiradar.audit.service.AuditService;
+import com.gongsiradar.common.util.Hashing;
+import com.gongsiradar.common.web.RequestContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

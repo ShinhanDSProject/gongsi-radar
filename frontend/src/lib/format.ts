@@ -1,4 +1,4 @@
-// 표시용 공용 함수. 금액 표기는 radar/textutil.py format_krw와 같은 규칙.
+// 표시용 공용 함수. 금액 표기는 radar/parsing/textutil.py format_krw와 같은 규칙.
 import type { Filing, RadarReport } from "../api/types";
 
 // unit: 끝에 붙는 단위. 시장 화면은 "5,454조 1,041억"처럼 단위를 떼고 쓴다(unit "")
@@ -100,7 +100,7 @@ export const EDIT_KEY: Record<string, string> = { 신설: "new", 삭제: "del", 
 export const LEVEL_KEY: Record<string, string> = { "인과 명시": "cause", "관련 맥락": "context", "확인 불가": "none" };
 export const VSTATUS_KEY: Record<string, string> = { 통과: "good", "재작성 후 통과": "good", 반려: "bad", "검토 필요": "warn" };
 
-// 서버의 출력 필터(radar/verify.py BANNED)와 같은 목록. 화면에서 먼저 막고, 서버가 다시 검사한다.
+// 서버의 출력 필터(radar/evidence/verify.py BANNED)와 같은 목록. 화면에서 먼저 막고, 서버가 다시 검사한다.
 const BANNED = [
   /강력\s*매수/, /매수/, /매도/, /목표\s*주?가/, /저평가/, /고평가/, /수익\s*보장/, /추천/, /급등/,
   /상승\s*(?:예상|전망|여력)/, /투자\s*(?:유망|적기|매력)/, /사야\s*(?:한다|할)/, /팔아야/,

@@ -16,7 +16,7 @@ import json
 import sys
 from pathlib import Path
 
-from .config import ROOT, Settings
+from radar.config import ROOT, Settings
 
 
 def _write_outputs(rep: dict, out_dir: Path) -> None:
@@ -66,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
     a = p.parse_args(argv)
 
     if a.cmd in ("demo", "run"):
-        from .service import run_analysis
+        from radar.pipeline.run import run_analysis
 
         s = Settings()
         if a.cmd == "demo":
@@ -85,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if a.cmd == "parse":
-        from .parser import parse_filing_zip
+        from radar.parsing.parser import parse_filing_zip
 
         rno = a.rcept_no or a.zip.stem
         doc = parse_filing_zip(a.zip.read_bytes(), rno)
@@ -101,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
 
 
     if a.cmd == "schema":
-        from .schemas import Report
+        from radar.pipeline.schemas import Report
 
         print(json.dumps(Report.model_json_schema(), ensure_ascii=False, indent=1))
         return 0

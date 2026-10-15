@@ -15,11 +15,11 @@
 | Market Data Tool | 공시·재무·시세·지배구조 Tool (DART 형태 샘플 / OpenDART / 공공데이터포털 시세) |
 | Core Zone: 주문 원장(PENDING→EXECUTED) | Core Zone: **리포트 발행 원장**(PENDING→PUBLISHED) |
 | HITL: Senior가 주문 승인 | HITL: Senior가 리포트 발행 승인(자기 요청은 승인 불가) |
-| 차단 표현: "수익 보장" | 차단 표현: 매수·매도·목표가·저평가 등 투자 권유·가치판단 (기존 `radar/verify.py BANNED`) |
+| 차단 표현: "수익 보장" | 차단 표현: 매수·매도·목표가·저평가 등 투자 권유·가치판단 (기존 `radar/evidence/verify.py BANNED`) |
 | PII: 계좌·주민번호 | PII: 주민번호·계좌·카드·전화·사업자번호·이메일 (공시 원문의 개인 정보 포함) |
 
 원칙: **AI는 쓰지 않는다(Write 없음).** 조회·초안까지만. 발행은 사람이 승인해야 Core Zone에 기록된다.
-**숫자는 코드가 계산한다.** LLM이 쓴 문장도 코드 검증(`radar/verify.py`)을 통과해야 리포트에 남는다.
+**숫자는 코드가 계산한다.** LLM이 쓴 문장도 코드 검증(`radar/evidence/verify.py`)을 통과해야 리포트에 남는다.
 
 ## 1. 구성·포트
 
@@ -192,7 +192,7 @@ Tool 목록(이름·scope): `get_document_insights`(DISCLOSURE_READ),
 - 응답은 전체 `PublicationOut`(publishedAt·rejectReason 포함), 목록은 `{items, total, page, size}`(size 기본 20, 최대 100)
 - 조회 키와 시스템 키가 같거나 비어 있으면 Core가 기동을 거부한다
 
-## 6. 리포트 JSON (`RadarReport`) — `ai-server/radar/schemas.py`가 정본
+## 6. 리포트 JSON (`RadarReport`) — `ai-server/radar/pipeline/schemas.py`가 정본
 
 기존 필드(`meta, parse, accounts, changes, tables, relations, timeline, review, metrics`)는 그대로 두고 아래를 더한다.
 `docs/report.schema.json`은 `python -m radar schema`로 다시 뽑는다.
@@ -255,7 +255,7 @@ CompanyProfile = { company:{corpCode, corpName, stockCode, induty}, filings:{rce
   valuation: Valuation|null, valuationNote: string|null, business: Business|null, governance: Governance|null, notes:string[] }
 ```
 
-## 7. MariaDB 스키마 (`scripts/sql/`, DB `gongsi`)
+## 7. MariaDB 스키마 (`db/schema/`, 시드 `db/seed.sql`, DB `gongsi`)
 
 | 파일 | 테이블 |
 |---|---|
@@ -332,7 +332,7 @@ SectorNode = { id: string, name: string, level: "root"|"section"|"division"|"com
 
 ## 10. 일일 수집(#3)
 
-- 적재 테이블: `scripts/sql/07_ingest_schema.sql`(`ingest_company`·`ingest_filing`·`ingest_financial_line`·`ingest_market_daily`·`ingest_index_daily`·`ingest_run`). 쓰기는 수집 전용 계정 `gongsi_ingest`(SELECT·INSERT·UPDATE, DELETE 없음), 앱 계정은 읽기만.
+- 적재 테이블: `db/schema/07_ingest_schema.sql`(`ingest_company`·`ingest_filing`·`ingest_financial_line`·`ingest_market_daily`·`ingest_index_daily`·`ingest_run`). 쓰기는 수집 전용 계정 `gongsi_ingest`(SELECT·INSERT·UPDATE, DELETE 없음), 앱 계정은 읽기만.
 - 수집은 요청을 받는 서버가 아니라 예약 작업이 돌린다. 원천 API 키와 적재 쓰기 권한을 서버에 두지 않는다.
 - `MarketOverview`에 추가: `newListings: {corpCode, corpName, stockCode, market, firstSeen, marketCap}[]`, `newListingsNote: string`, `ingested: boolean`.
   첫 적재일에 들어온 회사는 신규가 아니다(확인일 ≠ 공식 상장일).

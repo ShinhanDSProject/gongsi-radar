@@ -1,5 +1,5 @@
 """Worker 실행 이력을 agent_execution 테이블에 기록한다.
-tools/db.py의 앱 계정 엔진을 쓴다(업무 기록이라 감사 계정이 아니다).
+infra/db.py의 앱 계정 엔진을 쓴다(업무 기록이라 감사 계정이 아니다).
 """
 from __future__ import annotations
 import logging
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 from ..config import settings
 from ..llm.factory import active_model_name
-from ..tools.db import get_engine
+from ..infra.db import get_engine
 
 logger = logging.getLogger(__name__)
 

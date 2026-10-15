@@ -1,6 +1,6 @@
 package com.gongsiradar.publication.dto;
 
-import com.gongsiradar.publication.PublicationQueue;
+import com.gongsiradar.publication.repository.PublicationQueue;
 
 import java.time.LocalDateTime;
 

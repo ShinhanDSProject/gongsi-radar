@@ -16,7 +16,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from radar.config import Settings as RadarSettings
-from radar.sources import make_source
+from radar.sources.base import make_source
 
 from ..services.radar_session import sessions
 
@@ -35,7 +35,7 @@ def _filing_brief(f: dict) -> dict:
 # ---- 기업 상세의 원문 파생 정보 --------------------------------------------------------------
 def get_document_insights(corp_code: str) -> Dict[str, Any]:
     """사업 지표·지배구조(원문을 읽어야 나오는 부분). Spring 기업 상세가 business·governance 칸을 채우려고 부른다."""
-    from radar.insights import document_insights
+    from radar.insights.document import document_insights
     return document_insights(_source(), str(corp_code).strip())
 
 
@@ -118,7 +118,7 @@ def get_lawsuits(company: str, bsns_year: int, reprt_code: str = "11011") -> Lis
 
 def get_valuation(company: str) -> Dict[str, Any]:
     """TTM·PER·PBR(계산식·출처 포함). 판단 문구는 만들지 않는다. 원자료(재무·시세)는 소스(Spring)에서 받는다."""
-    from radar.valuation import compute_valuation
+    from radar.numbers.valuation import compute_valuation
     src = _source()
     return compute_valuation(src, src.resolve(str(company)))
 
@@ -142,7 +142,7 @@ def search_disclosures(query: str, top_k: int = 5, corp_code: Optional[str] = No
 
 def get_publication_history(corp_code: str) -> List[Dict[str, Any]]:
     """Core Zone 발행 원장 조회(조회 키). 쓰기 메서드는 이 서버에 없다."""
-    from .core_client import core_client
+    from ..infra.core_client import core_client
     return [{"publicationId": p.get("publicationId"), "periodLabel": p.get("periodLabel"), "version": p.get("version"),
              "status": p.get("status"), "decidedAt": p.get("decidedAt")}
             for p in core_client.list_publications(corp_code)]

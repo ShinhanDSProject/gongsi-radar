@@ -1,8 +1,8 @@
 package com.gongsiradar.internal;
 
-import com.gongsiradar.data.DataSourceException;
-import com.gongsiradar.data.OpenDartDataSource;
-import com.gongsiradar.data.SourceHttp;
+import com.gongsiradar.data.source.DataSourceException;
+import com.gongsiradar.data.source.OpenDartDataSource;
+import com.gongsiradar.data.client.SourceHttp;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

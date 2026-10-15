@@ -1,4 +1,4 @@
--- 수집 테스트용 H2(MariaDB 모드) 스키마. 정본은 scripts/sql/07_ingest_schema.sql — 같은 열·키를 H2 문법으로만 옮겼다
+-- 수집 테스트용 H2(MariaDB 모드) 스키마. 정본은 db/schema/07_ingest_schema.sql — 같은 열·키를 H2 문법으로만 옮겼다
 CREATE TABLE ingest_company (
   corp_code      VARCHAR(16)  PRIMARY KEY,
   corp_name      VARCHAR(100) NOT NULL,

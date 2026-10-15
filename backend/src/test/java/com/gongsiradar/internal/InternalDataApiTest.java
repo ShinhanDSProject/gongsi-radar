@@ -1,6 +1,6 @@
 package com.gongsiradar.internal;
 
-import com.gongsiradar.ai.AiClient;
+import com.gongsiradar.ai.client.AiClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;

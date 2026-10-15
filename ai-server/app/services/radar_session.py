@@ -25,10 +25,10 @@ from collections import OrderedDict
 from typing import Any, Dict, Tuple
 
 from radar.config import Settings as RadarSettings
-from radar.embed import make_embedder
-from radar.graph import Ctx, NODES, route_after_verify
-from radar.service_source import set_header_provider
-from radar.sources import make_source
+from radar.diff.embed import make_embedder
+from radar.pipeline.graph import Ctx, NODES, route_after_verify
+from radar.sources.service import set_header_provider
+from radar.sources.base import make_source
 
 from ..llm.factory import get_radar_llm
 from ..safety.context import get_caller_user_id, get_job_id, get_request_uid

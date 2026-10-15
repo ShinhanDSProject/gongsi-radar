@@ -1,6 +1,6 @@
 package com.gongsiradar;
 
-import com.gongsiradar.ingest.IngestRunOnce;
+import com.gongsiradar.ingest.runner.IngestRunOnce;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

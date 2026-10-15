@@ -1,6 +1,6 @@
 // 백엔드 DTO와 1:1로 맞춘 타입 (docs/CONTRACT.md §2~§6). 필드를 임의로 더하거나 빼지 않는다 —
 // 여기가 어긋나면 컴파일은 통과하고 화면만 조용히 빈다.
-// 리포트 본문(RadarReport)은 ai-server/radar/schemas.py가 정본이다. 기존 필드는 snake_case,
+// 리포트 본문(RadarReport)은 ai-server/radar/pipeline/schemas.py가 정본이다. 기존 필드는 snake_case,
 // §6에서 더한 필드는 camelCase다(계약 그대로). 새 필드는 아직 안 채워진 리포트가 있으므로 선택(?)으로 둔다.
 
 export interface ApiResponse<T> {
@@ -173,7 +173,7 @@ export interface LlmProviders {
 }
 
 // =====================================================================
-// 리포트 본문 RadarReport (§6, ai-server/radar/schemas.py)
+// 리포트 본문 RadarReport (§6, ai-server/radar/pipeline/schemas.py)
 // =====================================================================
 export type EditType = "신설" | "삭제" | "수치 수정" | "표현 수정";
 export type Topic = "위험·소송" | "사업·시장" | "거래" | "기타";

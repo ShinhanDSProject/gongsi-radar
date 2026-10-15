@@ -76,12 +76,39 @@ DRAFT ─발행 요청─→ PENDING ─Senior 승인─→ PUBLISHED ─(정정
 
 | 기능 | 어디서 |
 |---|---|
-| 계산식·출처 펼치기 — 모든 증감률·플래그·TTM·PER·PBR에 계산식, 입력값, 출처(접수번호·필드·연결/별도) | Spring `radar/Formulas`(화면 데이터)·Python `radar/formula.py`(리포트), 화면의 "계산식" |
-| 사업 지표 추출·검산 — 부문 매출·수주·생산능력·가동률을 구조가 명확한 표에서만 규칙 추출, 산술 검산 통과분만 사용 | AI `radar/business.py`(원문 표 분석) |
+| 계산식·출처 펼치기 — 모든 증감률·플래그·TTM·PER·PBR에 계산식, 입력값, 출처(접수번호·필드·연결/별도) | Spring `finance/Formulas`(화면 데이터)·Python `radar/numbers/formula.py`(리포트), 화면의 "계산식" |
+| 사업 지표 추출·검산 — 부문 매출·수주·생산능력·가동률을 구조가 명확한 표에서만 규칙 추출, 산술 검산 통과분만 사용 | AI `radar/insights/business.py`(원문 표 분석) |
 | 기업 목록·검색·상세 — 매출·영업이익률·시가총액·PER·PBR, 재무·시장·지배구조·공시 목록 | Spring `company/CompanyService`, `/companies` |
-| 지배구조·관계망 — 최대주주·임원·타법인출자 변동과 관계 그래프(목록에 있는 회사는 링크) | AI `radar/governance.py` |
-| TTM·PER·PBR — 최근 연간 + 당해 누적 − 전년 누적, 지배주주 계정(없으면 대체 계정 표시), 이익 ≤ 0이면 계산 안 함 | Spring `radar/Valuations`(화면)·Python `radar/valuation.py`(리포트) — 같은 결과를 골든 테스트로 고정 |
+| 지배구조·관계망 — 최대주주·임원·타법인출자 변동과 관계 그래프(목록에 있는 회사는 링크) | AI `radar/insights/governance.py` |
+| TTM·PER·PBR — 최근 연간 + 당해 누적 − 전년 누적, 지배주주 계정(없으면 대체 계정 표시), 이익 ≤ 0이면 계산 안 함 | Spring `finance/Valuations`(화면)·Python `radar/numbers/valuation.py`(리포트) — 같은 결과를 골든 테스트로 고정 |
 | 시장 화면 — 지수 추이(공식 지수 키가 없으면 '대체 지수'로 표시), 시가총액 추이, KSIC 업종 지도(트리맵·드릴다운), 최근 정기보고서 | Spring `market/MarketOverviewService`, `/market` |
+
+## 폴더 구조
+
+```
+gongsi-radar/
+├─ frontend/            React(Vite) — pages/ 화면, components/ 화면 조각, api/ 호출·타입
+├─ backend/             Spring Boot — com.gongsiradar.<도메인>/
+│                         controller/  REST 컨트롤러
+│                         service/     업무 로직
+│                         repository/  JPA 엔티티·enum·Repository(도메인별 한 폴더)
+│                         dto/         요청·응답
+│                         client/ config/ security/ ... 도메인에 필요한 것만
+│                       finance/ 계산식·TTM·PER·PBR, data/ 원천 소스(OpenDART·샘플·적재 DB), ingest/ 일일 수집
+├─ ai-server/           FastAPI
+│  ├─ app/              api/ 라우터, agents/ graph/ LangGraph, llm/ rag/ safety/ 가드레일,
+│  │                    tools/ Tool Gateway·Tool, infra/ DB 엔진·Core 클라이언트, services/ schemas/
+│  ├─ radar/            분석 라이브러리(서버와 무관)
+│  │                    parsing/ 원문 파싱·표, diff/ 문단 정렬·분류·임베딩, numbers/ 재무·계산식·밸류에이션,
+│  │                    evidence/ 관련 서술·코드 검증, insights/ 사업 지표·지배구조, pipeline/ 그래프·리포트 스키마,
+│  │                    sources/ 데이터 소스(base·sample·service), cli.py config.py llm.py
+│  └─ tests/            radar/ 라이브러리 테스트, app/ 서버 테스트
+├─ core-service/        FastAPI + SQLite — 리포트 발행 원장(Core Zone)
+├─ db/                  schema/01~07 DDL·계정, seed.sql
+├─ scripts/             db.sh(MariaDB) · dev.sh(전체 기동·종료)
+├─ samples/             가상 샘플 데이터(두 서버가 같이 씀)
+└─ docs/                CONTRACT.md(서비스 간 계약) · report.schema.json
+```
 
 ## 실행 방법
 
@@ -226,7 +253,7 @@ cd ai-server
 
 | 파일 | 내용 |
 |---|---|
-| `scripts/sql/01_schema.sql`, `seed.sql` | 사용자·권한·분석 요청·리포트 |
+| `db/schema/01_schema.sql`, `db/seed.sql` | 사용자·권한·분석 요청·리포트 |
 | `02_agent_schema.sql` | Worker 실행 이력 |
 | `03_hitl_schema.sql` | 발행 결재 큐 |
 | `04_governance_schema.sql` | 감사 3종·Kill Switch·`gongsi_audit`/`gongsi_app` 계정 |

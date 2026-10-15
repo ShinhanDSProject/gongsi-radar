@@ -1,6 +1,6 @@
 package com.gongsiradar.admin.dto;
 
-import com.gongsiradar.admin.GuardrailEvent;
+import com.gongsiradar.admin.repository.GuardrailEvent;
 
 import java.time.LocalDateTime;
 

@@ -13,7 +13,7 @@ from typing import Optional, Tuple
 import sqlalchemy as sa
 
 from ..config import settings
-from ..tools.db import get_engine
+from ..infra.db import get_engine
 
 logger = logging.getLogger(__name__)
 

@@ -20,10 +20,10 @@ from typing import Dict, List, Optional
 import sqlalchemy as sa
 from langchain_core.documents import Document
 
-from radar.classify import injection_suspected
-from radar.parser import ParsedDoc
+from radar.diff.classify import injection_suspected
+from radar.parsing.parser import ParsedDoc
 
-from ..tools.db import get_engine
+from ..infra.db import get_engine
 
 logger = logging.getLogger(__name__)
 

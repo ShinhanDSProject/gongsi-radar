@@ -4,12 +4,13 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 NAME=gongsi-mariadb
-SQL=(01_schema 02_agent_schema 03_hitl_schema 04_governance_schema 05_llm_schema 06_rag_schema 07_ingest_schema seed)
+SQL=(schema/01_schema schema/02_agent_schema schema/03_hitl_schema schema/04_governance_schema schema/05_llm_schema
+     schema/06_rag_schema schema/07_ingest_schema seed)
 
 apply() {
   for f in "${SQL[@]}"; do
-    echo "  적용: scripts/sql/$f.sql"
-    docker exec -i "$NAME" mariadb -uroot -proot < "scripts/sql/$f.sql"
+    echo "  적용: db/$f.sql"
+    docker exec -i "$NAME" mariadb -uroot -proot < "db/$f.sql"
   done
 }
 

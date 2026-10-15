@@ -1,8 +1,8 @@
 package com.gongsiradar.report.dto;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.gongsiradar.report.AnalysisReport;
-import com.gongsiradar.report.ApprovalStatus;
+import com.gongsiradar.report.repository.AnalysisReport;
+import com.gongsiradar.report.repository.ApprovalStatus;
 
 import java.time.LocalDateTime;
 

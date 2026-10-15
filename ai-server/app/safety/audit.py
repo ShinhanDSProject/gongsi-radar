@@ -30,7 +30,7 @@ _chain_lock = threading.Lock()
 
 
 def get_audit_engine() -> Engine:
-    """감사 기록 전용 엔진. tools/db.py의 앱 계정 엔진을 재사용하지 않는다 — 쓰는 경로와 고칠 수 있는 경로를 나눈다."""
+    """감사 기록 전용 엔진. infra/db.py의 앱 계정 엔진을 재사용하지 않는다 — 쓰는 경로와 고칠 수 있는 경로를 나눈다."""
     global _audit_engine
     if _audit_engine is None:
         _audit_engine = sa.create_engine(settings.mariadb_audit_url, pool_pre_ping=True,

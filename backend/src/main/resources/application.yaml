@@ -16,7 +16,7 @@ spring:
     driver-class-name: org.mariadb.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: validate            # 스키마는 scripts/sql/*.sql이 정본. JPA는 맞는지 확인만 한다
+      ddl-auto: validate            # 스키마는 db/schema/*.sql이 정본. JPA는 맞는지 확인만 한다
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MariaDBDialect

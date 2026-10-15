@@ -1,7 +1,7 @@
 package com.gongsiradar.analysis.dto;
 
-import com.gongsiradar.analysis.AnalysisRequest;
-import com.gongsiradar.analysis.AnalysisRequestStatus;
+import com.gongsiradar.analysis.repository.AnalysisRequest;
+import com.gongsiradar.analysis.repository.AnalysisRequestStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;

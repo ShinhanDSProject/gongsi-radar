@@ -1,6 +1,6 @@
 package com.gongsiradar.admin.dto;
 
-import com.gongsiradar.admin.KillSwitchStatus;
+import com.gongsiradar.admin.repository.KillSwitchStatus;
 
 import java.time.LocalDateTime;
 

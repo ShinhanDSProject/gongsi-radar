@@ -17,7 +17,7 @@ load_dotenv()            # radar 라이브러리가 읽는 RADAR_* 환경변수�
 from fastapi import FastAPI  # noqa: E402
 
 from .config import settings  # noqa: E402
-from .routers import agents, analyses, guardrails, health, insights, llm, rag, tools  # noqa: E402
+from .api import agents, analyses, guardrails, health, insights, llm, rag, tools  # noqa: E402
 from .safety.context import RequestUidLogFilter  # noqa: E402
 from .tools.registry import register_default_tools  # noqa: E402
 

@@ -1,6 +1,6 @@
 package com.gongsiradar.audit.dto;
 
-import com.gongsiradar.audit.AuditLog;
+import com.gongsiradar.audit.repository.AuditLog;
 
 import java.time.LocalDateTime;
 
