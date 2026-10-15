@@ -321,26 +321,45 @@ class WorkflowTest {
     }
 
     @Test
-    void 시장_화면은_필터를_먼저_검사하고_AI_서버로_프록시한다() throws Exception {
-        when(aiClient.market(eq("KOSDAQ"), eq("analyst_001"), anyList()))
-                .thenReturn(java.util.Map.of("market", "KOSDAQ", "sample", true));
+    void 시장_화면은_필터를_먼저_검사하고_Java가_직접_계산한다() throws Exception {
         mvc.perform(get("/api/market").param("market", "kosdaq").header("Authorization", junior()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.market").value("KOSDAQ"));
-        // 잘못된 값은 AI 서버까지 가지 않는다
+                .andExpect(jsonPath("$.data.market").value("KOSDAQ"))
+                .andExpect(jsonPath("$.data.sample").value(true))
+                .andExpect(jsonPath("$.data.markets[0].count").value(46));
         mvc.perform(get("/api/market").param("market", "NYSE").header("Authorization", junior()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
-        verify(aiClient, times(1)).market(anyString(), anyString(), anyList());
+        // 시장 화면은 AI 서버를 부르지 않는다(CONTRACT §11.1)
+        verifyNoInteractions(aiClient);
+    }
+
+    @Test
+    void 기업_목록과_상세는_Java가_계산하고_문서_파생_정보만_AI에서_받는다() throws Exception {
+        mvc.perform(get("/api/companies").param("q", "샘플").header("Authorization", junior()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].corpCode").value("00999001"))
+                .andExpect(jsonPath("$.data[0].per").isNumber());
+        when(aiClient.insights(eq("00999001"), eq("analyst_001"), anyList()))
+                .thenReturn(Map.of("business", Map.of("groups", List.of()), "notes", List.of()));
+        mvc.perform(get("/api/companies/00999001").header("Authorization", junior()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.company.corpName").value("샘플소재㈜"))
+                .andExpect(jsonPath("$.data.valuation.interim.reprtCode").value("11012"))
+                .andExpect(jsonPath("$.data.business.groups").isArray())
+                .andExpect(jsonPath("$.data.governance").doesNotExist());
+        mvc.perform(get("/api/companies/99999999").header("Authorization", junior()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("NOT_FOUND"));
     }
 
     @Test
     void 수집_상태는_Senior만_본다() throws Exception {
-        when(aiClient.ingestStatus(anyString())).thenReturn(java.util.Map.of("enabled", true));
         mvc.perform(get("/api/admin/ingest").header("Authorization", junior()))
                 .andExpect(status().isForbidden());
         mvc.perform(get("/api/admin/ingest").header("Authorization", senior()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.enabled").value(true));
+                .andExpect(jsonPath("$.data.enabled").value(true))
+                .andExpect(jsonPath("$.data.tables.ingest_company").isNumber());
     }
 }

@@ -48,7 +48,8 @@ def test_audit_log_is_hash_chained(record_db):
 
 
 def _invoke(user_id="analyst_001", scope=("DISCLOSURE_READ",)):
-    return gateway.invoke("search_companies", {"query": "샘플"}, agent_id="pytest", user_id=user_id, scope=list(scope))
+    return gateway.invoke("get_document_insights", {"corp_code": "00777001"}, agent_id="pytest", user_id=user_id,
+                          scope=list(scope))
 
 
 def test_kill_switch_blocks_tool_and_records_attempt(monkeypatch, record_db):

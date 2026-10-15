@@ -75,30 +75,23 @@ def test_rag_isolates_injected_paragraph(client):
     assert denied.status_code == 403
 
 
-def test_market_requires_market_scope(client):
+def test_data_screen_routes_are_gone(client):
+    """기업 목록·상세·시장·수집 상태는 Spring이 계산한다(§11). AI 서버에는 경로가 없다."""
+    h = {**KEY, "X-User-Id": "analyst_001", "X-User-Scopes": "DISCLOSURE_READ,MARKET_DATA_READ"}
+    for path in ("/ai/companies", "/ai/companies/00999001", "/ai/market", "/ai/ingest/status"):
+        assert client.get(path, headers=h).status_code == 404, path
+    names = {t["name"] for t in client.get("/ai/tools", headers=h).json()}
+    assert not names & {"search_companies", "get_company_profile", "get_market_overview"}
+    assert "get_document_insights" in names
+
+
+def test_insights_requires_disclosure_scope(client):
     h = {**KEY, "X-User-Id": "analyst_001"}
-    ok = client.get("/ai/market?market=KOSDAQ", headers={**h, "X-User-Scopes": "MARKET_DATA_READ"})
-    assert ok.status_code == 200 and ok.json()["market"] == "KOSDAQ"
-    assert client.get("/ai/market", headers={**h, "X-User-Scopes": "DISCLOSURE_READ"}).status_code == 403
-    assert client.get("/ai/market?market=NYSE", headers={**h, "X-User-Scopes": "MARKET_DATA_READ"}).status_code == 400
-
-
-def test_ingest_status_reads_run_log(client, monkeypatch):
-    import sqlalchemy as sa
-    from sqlalchemy.pool import StaticPool
-
-    from app.routers import ingest as ingest_router
-    from radar.config import Settings
-    from radar.ingest import Ingestor, IngestStore
-    from radar.ingest.tables import metadata
-    from radar.sources import SampleSource
-
-    e = sa.create_engine("sqlite://", poolclass=StaticPool, connect_args={"check_same_thread": False})
-    monkeypatch.setattr(ingest_router, "get_engine", lambda: e)
-    metadata.create_all(e)
-    assert client.get("/ai/ingest/status", headers=KEY).json()["runs"] == []
-    Ingestor(SampleSource(Settings().sample_dir), IngestStore(e)).run("daily", steps=("companies", "market"))
-    body = client.get("/ai/ingest/status", headers=KEY).json()
-    assert body["lastRun"]["status"] == "DONE" and body["tables"]["ingest_company"] == 46
-    assert [s["step"] for s in body["steps"]] == ["companies", "market"]
-    assert body["budgetLeft"] == body["budget"] - body["callsToday"]
+    ok = client.get("/ai/insights/00999001", headers={**h, "X-User-Scopes": "DISCLOSURE_READ"})
+    assert ok.status_code == 200
+    body = ok.json()
+    assert set(body) == {"business", "governance", "notes"}
+    assert body["business"]["groups"] and body["governance"]["rceptNo"] == "20260317000388"
+    assert client.get("/ai/insights/00999001", headers={**h, "X-User-Scopes": "MARKET_DATA_READ"}).status_code == 403
+    assert client.get("/ai/insights/00999001", headers={"X-User-Scopes": "DISCLOSURE_READ"}).status_code == 422
+    assert client.get("/ai/insights/99999999", headers={**h, "X-User-Scopes": "DISCLOSURE_READ"}).status_code == 404

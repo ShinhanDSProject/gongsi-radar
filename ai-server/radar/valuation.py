@@ -14,7 +14,7 @@ from datetime import date, datetime
 
 from .financials import amount
 from .formula import fin_source, formula, inp, ratio, src
-from .sources import REPRT, SourceError
+from .sources import REPRT, SourceError, data_origin
 
 INTERIM_ORDER = ("11014", "11012", "11013")  # 3분기 → 반기 → 1분기: 가장 최근 누적부터
 FLOW, STOCK = ("IS", "CIS"), ("BS",)
@@ -120,7 +120,7 @@ def gather_valuation_inputs(source, company: dict, as_of=None) -> dict:
         notes.append("시세 없음(공공데이터포털 키 미설정이거나 해당 종목 시세 없음)")
     msrc = None
     if prices:
-        msrc = "sample" if getattr(source, "name", "") == "sample" else "data.go.kr"
+        msrc = "sample" if data_origin(source) == "sample" else "data.go.kr"
     return {"company": company, "as_of": d.isoformat(), "annual": annual, "interim": interim,
             "prices": sorted(prices, key=lambda p: p["basDt"]), "market_source": msrc, "notes": notes}
 

@@ -49,6 +49,35 @@ gongsi:
     url: ${MARIADB_AUDIT_URL:jdbc:mariadb://localhost:3307/gongsi?useUnicode=true&characterEncoding=utf8}
     username: ${MARIADB_AUDIT_USER:gongsi_audit}
     password: ${MARIADB_AUDIT_PASSWORD:audit-only-pass}
+  data:
+    # 데이터 원천: sample(저장소 루트 samples/data의 가상 기업) | opendart(OpenDART + 공공데이터포털 시세)
+    source: ${GONGSI_DATA_SOURCE:sample}
+    # 샘플 디렉터리. 상대 경로는 실행 위치(backend/) 기준이고, 없으면 위로 올라가며 samples/data를 찾는다
+    sample-dir: ${GONGSI_SAMPLE_DIR:../samples/data}
+    # OpenDART·공공데이터포털 응답 디스크 캐시(원문 ZIP 영구, 목록·재무는 요청별). backend/.gitignore에 있다
+    cache-dir: ${GONGSI_CACHE_DIR:.cache}
+    # [보안] 원천 API 키는 Spring에만 둔다. AI 서버는 키 없이 아래 내부 데이터 API로만 받는다
+    opendart-api-key: ${OPENDART_API_KEY:}
+    data-go-kr-api-key: ${DATA_GO_KR_API_KEY:}     # 공공데이터포털 '디코딩' 키
+    peers-file: ${GONGSI_PEERS_FILE:}               # OpenDART 업종 피어 고유번호 목록(JSON 배열). 비우면 피어 없음
+    # 적재 DB(#3)를 먼저 읽고 없으면 원천을 부른다. false면 항상 원천
+    ingested-read: true
+    # 내부 데이터 API(/internal/data/**, AI 서버 → Spring) 키. AI_SERVER_API_KEY와 다른 값이어야 한다
+    internal-key: ${DATA_API_KEY:dev-data-internal-key}
+  ingest:
+    # 일일 수집 예약(Spring cron, Asia/Seoul). "-"(기본)면 꺼짐. 예: "0 30 18 * * MON-FRI"
+    cron: ${GONGSI_INGEST_CRON:-}
+    # 1회 실행 모드: --gongsi.ingest.run-once=daily|backfill 이면 웹 서버 없이 한 번 돌고 끝난다
+    run-once: ${GONGSI_INGEST_RUN_ONCE:}
+    budget: ${INGEST_DAILY_BUDGET:15000}         # 실행당 원천 호출 예산(OpenDART 일 20,000건 한도 안에서)
+    years: 3                                     # backfill: 회사별로 거슬러 받을 해 수
+    documents: true                              # 최근 90일 정기공시 원문 ZIP도 받아 둘지
+    # [보안] 적재 테이블 쓰기 전용 계정(SELECT·INSERT·UPDATE, DELETE 없음). 앱 계정(gongsi_app)은 적재 테이블을 읽기만 한다.
+    #        수집 작업만 이 커넥션을 쓴다 — DataSource 빈으로 노출하지 않는다(IngestService 참고)
+    datasource:
+      url: ${MARIADB_INGEST_URL:jdbc:mariadb://localhost:3307/gongsi?useUnicode=true&characterEncoding=utf8}
+      username: ${MARIADB_INGEST_USER:gongsi_ingest}
+      password: ${MARIADB_INGEST_PASSWORD:ingest-pass}
 
 logging:
   level:

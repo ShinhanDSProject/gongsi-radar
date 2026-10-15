@@ -81,36 +81,18 @@ public class AiClient {
                 .bodyToMono(GuardrailCheckResult.class));
     }
 
-    // ───────────────────────── 데이터 프록시 ─────────────────────────
-    // 응답은 가공 없이 흘려보낸다. Spring의 몫은 "누가 무엇을 볼 수 있는가"이지 데이터 모양이 아니다
+    // ───────────────────────── 기업 상세의 문서 파생 정보 ─────────────────────────
 
-    public Object companies(String q, Integer limit, String userId, List<String> userScopes) {
+    /**
+     * 사업 지표·지배구조 변동 {@code {business, governance, notes}}. 원문 분석이라 AI 서버가 만든다(CONTRACT §11.1).
+     * 기업 목록·재무·시장 지표는 Spring이 직접 계산하므로 AI 서버를 부르지 않는다.
+     */
+    public Map<String, Object> insights(String corpCode, String userId, List<String> userScopes) {
         return call(() -> aiWebClient.get()
-                .uri(b -> {
-                    b.path("/ai/companies");
-                    if (q != null && !q.isBlank()) b.queryParam("q", q);
-                    if (limit != null) b.queryParam("limit", limit);
-                    return b.build();
-                })
+                .uri("/ai/insights/{corpCode}", corpCode)
                 .headers(h -> withUser(h, userId, userScopes))
                 .retrieve()
-                .bodyToMono(Object.class));
-    }
-
-    public Object companyProfile(String corpCode, String userId, List<String> userScopes) {
-        return call(() -> aiWebClient.get()
-                .uri("/ai/companies/{corpCode}", corpCode)
-                .headers(h -> withUser(h, userId, userScopes))
-                .retrieve()
-                .bodyToMono(Object.class));
-    }
-
-    public Object market(String market, String userId, List<String> userScopes) {
-        return call(() -> aiWebClient.get()
-                .uri(b -> b.path("/ai/market").queryParam("market", market).build())
-                .headers(h -> withUser(h, userId, userScopes))
-                .retrieve()
-                .bodyToMono(Object.class));
+                .bodyToMono(MAP_TYPE));
     }
 
     public Object agents(String userId, List<String> userScopes) {
@@ -126,14 +108,6 @@ public class AiClient {
     public Map<String, Object> llmProviders(String userId) {
         return call(() -> aiWebClient.get()
                 .uri("/ai/llm/providers")
-                .headers(h -> withUser(h, userId, null))
-                .retrieve()
-                .bodyToMono(MAP_TYPE));
-    }
-
-    public Map<String, Object> ingestStatus(String userId) {
-        return call(() -> aiWebClient.get()
-                .uri("/ai/ingest/status")
                 .headers(h -> withUser(h, userId, null))
                 .retrieve()
                 .bodyToMono(MAP_TYPE));

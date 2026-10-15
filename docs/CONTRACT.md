@@ -114,7 +114,7 @@ PublicationDto = { publicationId, reportId, corpCode, corpName, periodLabel, tit
   createdAt, decisionRequiredBy }
 ```
 
-### 3.5 기업 (FastAPI 데이터 프록시)
+### 3.5 기업 (Spring이 적재 DB·원천에서 직접 계산 — §11)
 - `GET /api/companies?q=&limit=50` (`DISCLOSURE_READ`) → `CompanyRow[]`
 - `GET /api/companies/{corpCode}` (`DISCLOSURE_READ`; 시장 지표는 `MARKET_DATA_READ`가 없으면 FastAPI가 `valuation: null` + 사유)
   → `CompanyProfile` (§6.3)
@@ -154,9 +154,10 @@ PublicationDto = { publicationId, reportId, corpCode, corpName, periodLabel, tit
 - `GET /ai/llm/providers` → `{active, providers:[{name, model, status:"healthy"|"available"|"blocked"|"unreachable", type:"local"|"external"}]}` · `POST /ai/llm/switch` `{provider}`
 - `GET /ai/tools` (X-User-Scopes로 필터) · `POST /ai/tools/{name}/invoke` (헤더 `X-User-Id`, `X-User-Scopes`, `X-Agent-Id`; body=인자만) · `GET /ai/tools/calls/recent`
 - `GET /ai/agents` · `POST /ai/agents/{agentId}/run` `{query, scope}` · `GET /ai/agents/llm-calls/recent`
-- `GET /ai/companies?q=&limit=` · `GET /ai/companies/{corpCode}` — 내부적으로 Tool Gateway의 `search_companies`·`get_company_profile`을 부른다(Scope 검사·호출 기록이 같은 길로 남게).
+- `GET /ai/insights/{corpCode}` (X-User-Scopes에 `DISCLOSURE_READ` 필요) → `{business, governance, notes}` — 기업 상세의 문서 파생 정보. Tool Gateway `get_document_insights`를 거친다. 403·404·502(데이터 서비스 장애)
+- (제거됨, §11) `/ai/companies`·`/ai/market`·`/ai/ingest` — 데이터 API는 Spring으로 옮겼다
 
-Tool 목록(이름·scope): `search_companies`(DISCLOSURE_READ), `get_company_profile`(DISCLOSURE_READ),
+Tool 목록(이름·scope): `get_document_insights`(DISCLOSURE_READ),
 `compare_filings`(DISCLOSURE_READ), `get_financial_changes`(DISCLOSURE_READ), `get_business_metrics`(DISCLOSURE_READ),
 `get_governance`(DISCLOSURE_READ), `get_lawsuits`(DISCLOSURE_READ), `get_valuation`(MARKET_DATA_READ),
 `get_stock_price`(MARKET_DATA_READ), `search_disclosures`(RAG_READ), `get_publication_history`(PUBLICATION_READ, Core 조회 키).
@@ -245,7 +246,7 @@ Valuation = { asOf:string|null, marketSource:"sample"|"data.go.kr"|null, fsDiv:"
 TTM = 최근 연간 + 당해 중간 누적 − 전년 같은 중간 누적(같은 연결·별도 범위). 이익 ≤ 0이면 PER 계산 안 함.
 지배주주 계정이 없으면 전체 계정으로 대체하고 input note에 "대체 계정"을 남긴다. 판단 문구(저평가 등)는 쓰지 않는다.
 
-### 6.6 기업 목록·상세 (`/ai/companies`)
+### 6.6 기업 목록·상세 (Spring `/api/companies`)
 ```ts
 CompanyRow = { corpCode, corpName, stockCode, induty|null, hasFilings:boolean, revenue:number|null, opIncome:number|null,
   opMarginPct:number|null, marketCap:number|null, per:number|null, pbr:number|null, basis:string|null }
@@ -337,3 +338,39 @@ SectorNode = { id: string, name: string, level: "root"|"section"|"division"|"com
   첫 적재일에 들어온 회사는 신규가 아니다(확인일 ≠ 공식 상장일).
 - 관리: Spring `GET /api/admin/ingest`(Senior) → 수집 상태 `{enabled, reason, budget, callsToday, budgetLeft, lastMarketDate, tables, lastRun, runs[], steps[]}`. 조회만 있고 수집 시작 API는 없다.
 - 감사: 실행마다 `audit_log`에 `INGEST_RUN`(단계별 상태·호출 수·행 수, 키·본문 없음).
+
+## 11. 역할 분리 — Spring(데이터·업무) / FastAPI(AI·문서 분석)
+
+### 11.1 경계
+
+| | Spring (backend, 8180) | FastAPI (ai-server, 8100) |
+|---|---|---|
+| 원천 연동 | OpenDART·공공데이터포털 클라이언트, **원천 API 키는 여기만** | 없음(키 없음). 데이터는 Spring 내부 API로만 받는다 |
+| 일일 수집(#3) | `@Scheduled` 예약 작업 + 1회 실행 모드, 수집 전용 DataSource(`gongsi_ingest`) | 없음(Python `radar/ingest`는 제거) |
+| 화면 데이터 API | `/api/companies`, `/api/companies/{corpCode}`, `/api/market`, `/api/admin/ingest` — **Java로 직접 계산**(적재 DB 우선, 없으면 원천) | 없음(`/ai/companies`·`/ai/market`·`/ai/ingest` 제거) |
+| 문서 분석 | — | 공시 원문 파싱·비교·관련 서술·검증·사업 지표·지배구조 변동(리포트), 에이전트·RAG·가드레일·LLM |
+| 기업 상세의 문서 파생 정보 | `/api/companies/{corpCode}`가 AI `GET /ai/insights/{corpCode}`를 불러 `business`·`governance`만 붙인다 | `GET /ai/insights/{corpCode}` → `{business, governance, notes}` |
+
+- 화면 경로·응답 모양은 바꾸지 않는다(§3.5, §6.6, §9, §10). Java 결과는 `backend/src/test/resources/golden/*.json`(분리 전 Python 결과)과 같아야 한다.
+- 샘플 데이터는 저장소 루트 `samples/data/`를 두 서버가 함께 읽는다(`gongsi.data.sample-dir`, `RADAR_SAMPLE_DIR`).
+- 데이터 모드: `gongsi.data.source=sample|opendart`(Spring). AI 서버는 항상 `RADAR_SOURCE=service`(Spring 내부 API). 테스트·CLI 단독 실행만 `sample`.
+
+### 11.2 내부 데이터 API (Spring → AI 서버 전용)
+
+- 경로 `/internal/data/**`, 헤더 `X-Internal-API-Key: DATA_API_KEY`(기본 `dev-data-internal-key`, AI 서버 키와 다른 값). JWT를 쓰지 않는다.
+  프런트 프록시는 `/api`만 넘기므로 브라우저에서는 닿지 않는다. 호출마다 `X-Request-ID`·`X-User-Id`를 받으면 로그에 남긴다.
+- 모든 응답에 헤더 `X-Data-Origin: sample|opendart`를 싣는다. AI 서버는 이 값으로 리포트의 `meta.sample_data`와 시장 지표 출처(`marketSource`)를 정한다 — 가상 샘플이 실제 공시처럼 보이면 안 된다.
+- **응답 모양은 원천 그대로**(OpenDART·공공데이터포털 필드) — radar 파이프라인 코드가 바뀌지 않게. 없으면 404 `{"detail": "..."}`(radar는 `SourceError`로 받는다).
+
+| 메서드·경로 | 응답 |
+|---|---|
+| `GET /internal/data/companies/resolve?q=` | `{corp_code, corp_name, stock_code, induty, induty_code, market}` (종목코드·고유번호·회사명) |
+| `GET /internal/data/companies` | 위 모양의 배열(상장사) |
+| `GET /internal/data/filings?corpCode=` | `[{rcept_no, report_nm, rcept_dt, reprt_code, bsns_year, hasDocument}]` 최신순 |
+| `GET /internal/data/report?corpCode=&bsnsYear=&reprtCode=` | `find_report` 모양 `{corp_code, corp_name, stock_code, report_nm, rcept_no, rcept_dt, rm, bsns_year, reprt_code, url, is_correction}` |
+| `GET /internal/data/documents/{rceptNo}` | `application/zip` 원문(document.xml ZIP 바이트) |
+| `GET /internal/data/financials?corpCode=&bsnsYear=&reprtCode=` | `{fs_div, list:[fnlttSinglAcntAll 행]}` (CFS 없으면 OFS) |
+| `GET /internal/data/peers?corpCode=&bsnsYear=&reprtCode=` | `{list:[fnlttMultiAcnt 행]}` |
+| `GET /internal/data/lawsuits?corpCode=&bgn=&end=` | `{list:[lwstLg 행]}` |
+| `GET /internal/data/governance?corpCode=&bsnsYear=&reprtCode=` | `{shareholders, executives, investments, rcept_no}` (hyslrSttus·exctvSttus·otrCprInvstmntSttus 행) |
+| `GET /internal/data/market/{stockCode}` | `{items:[getStockPriceInfo 행]}` 최신순 |

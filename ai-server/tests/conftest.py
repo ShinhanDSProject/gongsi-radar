@@ -4,8 +4,14 @@
 인메모리 SQLite로 돌린다. Kill Switch는 기본 꺼짐으로 고정하고, 켜는 테스트만 따로 바꾼다.
 LLM은 mock, 임베딩은 hash, Chroma는 임시 폴더 — 외부 서비스 없이 전 구간이 돈다.
 radar 라이브러리 테스트(unittest)는 이 설정과 무관하게 그대로 돈다.
+
+데이터 소스는 샘플(저장소 루트 samples/data)로 고정한다. 앱 기본값은 RADAR_SOURCE=service(Spring 내부 데이터 API)라
+그대로 두면 Spring이 떠 있어야 테스트가 돈다. app을 import하기 전에(.env·기본값보다 먼저) 심는다.
 """
+import os
 import tempfile
+
+os.environ["RADAR_SOURCE"] = "sample"
 
 import pytest
 import sqlalchemy as sa

@@ -1,0 +1,72 @@
+[
+ {
+  "corpCode": "00888001",
+  "corpName": "피어기업01(가상)",
+  "stockCode": "888001",
+  "induty": "2차전지 소재",
+  "hasFilings": true,
+  "revenue": 277775000000,
+  "opIncome": 22336000000,
+  "opMarginPct": 8.04,
+  "marketCap": 183490000000,
+  "per": 12.41,
+  "pbr": 0.21,
+  "basis": "매출·영업이익 2025 사업보고서(CFS) · PER(TTM)·PBR 시세 2026-10-14"
+ },
+ {
+  "corpCode": "00888002",
+  "corpName": "피어기업02(가상)",
+  "stockCode": "888002",
+  "induty": "2차전지 소재",
+  "hasFilings": true,
+  "revenue": 1136232000000,
+  "opIncome": 87905000000,
+  "opMarginPct": 7.74,
+  "marketCap": 910800000000,
+  "per": 19.12,
+  "pbr": 1.77,
+  "basis": "매출·영업이익 2025 사업보고서(CFS) · PER(TTM)·PBR 시세 2026-10-14"
+ },
+ {
+  "corpCode": "00888003",
+  "corpName": "피어기업03(가상)",
+  "stockCode": "888003",
+  "induty": "2차전지 소재",
+  "hasFilings": true,
+  "revenue": 1423397000000,
+  "opIncome": 58083000000,
+  "opMarginPct": 4.08,
+  "marketCap": 639400000000,
+  "per": 17.54,
+  "pbr": 0.5,
+  "basis": "매출·영업이익 2025 사업보고서(CFS) · PER(TTM)·PBR 시세 2026-10-14"
+ },
+ {
+  "corpCode": "00888004",
+  "corpName": "피어기업04(가상)",
+  "stockCode": "888004",
+  "induty": "2차전지 소재",
+  "hasFilings": true,
+  "revenue": 613593000000,
+  "opIncome": 28465000000,
+  "opMarginPct": 4.64,
+  "marketCap": 432150000000,
+  "per": 18.57,
+  "pbr": 0.53,
+  "basis": "매출·영업이익 2025 사업보고서(CFS) · PER(TTM)·PBR 시세 2026-10-14"
+ },
+ {
+  "corpCode": "00888005",
+  "corpName": "피어기업05(가상)",
+  "stockCode": "888005",
+  "induty": "2차전지 소재",
+  "hasFilings": true,
+  "revenue": 2090271000000,
+  "opIncome": 84495000000,
+  "opMarginPct": 4.04,
+  "marketCap": 747300000000,
+  "per": 9.9,
+  "pbr": 2.61,
+  "basis": "매출·영업이익 2025 사업보고서(CFS) · PER(TTM)·PBR 시세 2026-10-14"
+ }
+]

@@ -1,5 +1,9 @@
 """AI 서버 진입점(Middle Zone · AI Layer). Spring Boot만 내부 키로 부른다.
 
+역할은 AI·문서 분석뿐이다(docs/CONTRACT.md §11): 분석 에이전트·RAG·가드레일·LLM 전환·Tool Gateway와
+기업 상세의 원문 파생 정보(/ai/insights). 기업 목록·상세·시장 화면·수집 상태 API는 Spring에 있다.
+데이터는 Spring 내부 데이터 API로만 받는다(RADAR_SOURCE=service) — 원천 API 키는 이 서버에 없다.
+
 logging.basicConfig를 여기서 부른다. 없으면 우리 모듈의 logger.info 감사 줄이 통째로 버려진다(uvicorn은 자기 로거만 설정한다).
 로그 패턴에 request_uid를 넣어 감사 테이블과 로그를 같은 값으로 오갈 수 있게 한다.
 """
@@ -13,7 +17,7 @@ load_dotenv()            # radar 라이브러리가 읽는 RADAR_* 환경변수�
 from fastapi import FastAPI  # noqa: E402
 
 from .config import settings  # noqa: E402
-from .routers import agents, analyses, companies, guardrails, health, ingest, llm, market, rag, tools  # noqa: E402
+from .routers import agents, analyses, guardrails, health, insights, llm, rag, tools  # noqa: E402
 from .safety.context import RequestUidLogFilter  # noqa: E402
 from .tools.registry import register_default_tools  # noqa: E402
 
@@ -30,7 +34,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title=settings.service_name, version=settings.version, lifespan=lifespan)
-for r in (health, analyses, rag, tools, agents, guardrails, llm, companies, market, ingest):
+for r in (health, analyses, rag, tools, agents, guardrails, llm, insights):
     app.include_router(r.router)
 
 

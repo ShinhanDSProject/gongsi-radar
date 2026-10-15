@@ -38,3 +38,6 @@ out/
 
 ### 로컬 실행 로그 ###
 *.log
+
+### 원천 API 응답 캐시(gongsi.data.cache-dir) ###
+.cache/

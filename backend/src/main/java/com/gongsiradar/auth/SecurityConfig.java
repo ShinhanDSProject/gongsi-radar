@@ -5,6 +5,7 @@ import com.gongsiradar.common.ApiResponse;
 import com.gongsiradar.common.ErrorCode;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
@@ -34,7 +35,9 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtFilter;
     private final ObjectMapper objectMapper;
 
+    /** 수집 1회 실행 모드(웹 서버 없음)에서는 만들지 않는다. */
     @Bean
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(c -> c.disable())
@@ -42,6 +45,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        // 내부 데이터 API는 JWT가 아니라 내부 키로 확인한다(InternalKeyFilter가 이 체인보다 먼저 돈다)
+                        .requestMatchers("/internal/data/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("SENIOR_MANAGER")
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e

@@ -8,7 +8,7 @@ from radar.config import ALIGN_THRESHOLDS, ROOT
 from radar.embed import make_embedder
 from radar.parser import ParseError, choose_main_file, decode, parse_filing_zip, repair
 
-DATA = ROOT / "samples" / "data" / "filings"
+DATA = ROOT.parent / "samples" / "data" / "filings"
 OLD, NEW = "20250318000412", "20260317000388"
 
 

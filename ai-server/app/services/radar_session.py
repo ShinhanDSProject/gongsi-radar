@@ -11,6 +11,9 @@ radar/ 라이브러리는 고정 DAG(수집·파싱 → 수치 분석 → 본문
 세션은 (job_id, 회사, 연도, 보고서) 키로 찾는다. Tool은 인자로 회사·연도만 받고 job_id는 contextvar에서 읽는다 —
 LLM이 job_id를 지어낼 수 없게 하기 위함이다. 그래프 밖에서 Tool을 직접 부르면(job 없음) 임시 세션을 만든다.
 
+데이터는 radar 소스(RADAR_SOURCE=service → Spring 내부 데이터 API)로 받는다. 여기서 소스에 추적 헤더 콜백을 심어
+Spring 로그에도 같은 X-Request-ID·X-User-Id가 남게 한다(radar는 app의 contextvars를 모른다).
+
 [주의] 세션은 프로세스 메모리에 있다. AI 서버가 재기동하면 사라지고, 다 쓴 세션은 LRU로 밀어낸다.
 """
 from __future__ import annotations
@@ -19,17 +22,31 @@ import logging
 import threading
 import time
 from collections import OrderedDict
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 from radar.config import Settings as RadarSettings
 from radar.embed import make_embedder
 from radar.graph import Ctx, NODES, route_after_verify
+from radar.service_source import set_header_provider
 from radar.sources import make_source
 
 from ..llm.factory import get_radar_llm
-from ..safety.context import get_job_id, get_request_uid
+from ..safety.context import get_caller_user_id, get_job_id, get_request_uid
 
 logger = logging.getLogger(__name__)
+
+
+def trace_headers() -> Dict[str, str]:
+    """Spring 내부 데이터 API에 넘길 추적 헤더. 값이 없으면 빈 헤더는 보내지 않는다."""
+    h: Dict[str, str] = {}
+    if uid := get_request_uid():
+        h["X-Request-ID"] = uid
+    if user := get_caller_user_id():
+        h["X-User-Id"] = user
+    return h
+
+
+set_header_provider(trace_headers)
 
 STAGE_AGENT = {"ingest": "disclosure_analyst", "numbers": "disclosure_analyst", "diff": "disclosure_analyst",
                "relate": "financial_analyst", "verify": "risk_reviewer", "report": "report_writer"}

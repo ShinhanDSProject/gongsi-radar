@@ -39,9 +39,12 @@ MAX_VERIFY_RETRIES = 2
 
 @dataclass
 class Settings:
-    source: str = field(default_factory=lambda: os.getenv("RADAR_SOURCE", "sample"))  # sample | opendart
-    dart_api_key: str | None = field(default_factory=lambda: os.getenv("OPENDART_API_KEY"))
-    sample_dir: Path = field(default_factory=lambda: Path(os.getenv("RADAR_SAMPLE_DIR", ROOT / "samples" / "data")))
+    # service: Spring 내부 데이터 API(AI 서버 기본, §11) | sample: 테스트·CLI 단독 실행 | opendart: CLI 전용(키 필요)
+    source: str = field(default_factory=lambda: os.getenv("RADAR_SOURCE", "sample"))
+    service_url: str = field(default_factory=lambda: os.getenv("RADAR_SERVICE_URL", "http://localhost:8180/internal/data"))
+    service_key: str = field(default_factory=lambda: os.getenv("RADAR_SERVICE_KEY", "dev-data-internal-key"))
+    service_timeout: float = field(default_factory=lambda: float(os.getenv("RADAR_SERVICE_TIMEOUT", "20")))
+    sample_dir: Path = field(default_factory=lambda: Path(os.getenv("RADAR_SAMPLE_DIR", ROOT.parent / "samples" / "data")))  # 저장소 루트 — Spring과 함께 쓴다
     cache_dir: Path = field(default_factory=lambda: Path(os.getenv("RADAR_CACHE_DIR", ROOT / ".cache")))
     out_dir: Path = field(default_factory=lambda: Path(os.getenv("RADAR_OUT_DIR", ROOT / "out")))
     embedder: str = field(default_factory=lambda: os.getenv("RADAR_EMBEDDER", "tfidf"))
@@ -49,9 +52,6 @@ class Settings:
     llm_api_key: str | None = field(default_factory=lambda: os.getenv("OPENAI_API_KEY"))
     llm_model_small: str = field(default_factory=lambda: os.getenv("RADAR_LLM_SMALL", "gpt-4o-mini"))
     llm_model_large: str = field(default_factory=lambda: os.getenv("RADAR_LLM_LARGE", "gpt-4o"))
-    peers_file: Path | None = field(default_factory=lambda: Path(p) if (p := os.getenv("RADAR_PEERS_FILE")) else None)
-    # #3 적재 DB(읽기). 비어 있으면 원천만 쓴다. 쓰기(수집)는 RADAR_INGEST_WRITE_DB(수집 전용 계정)
-    ingest_db: str | None = field(default_factory=lambda: os.getenv("RADAR_INGEST_DB") or None)
     demo_fault_injection: bool = False  # 시연용: 첫 시도에서 수치 오류를 주입해 반려 루프를 보여 줌
 
     @property

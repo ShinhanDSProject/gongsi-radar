@@ -1,8 +1,14 @@
 """AI 서버 설정. 값은 환경변수(.env)로 덮어쓴다. 기본값은 로컬 개발용이다(docs/CONTRACT.md §1).
 
 radar/ 라이브러리는 자기 설정(radar.config.Settings)을 따로 가진다. 여기서는 AI 계층 —
-인증·LLM 전환·감사·Core Zone 조회 — 만 다루고, 공시 데이터 소스 설정(RADAR_SOURCE 등)은 radar가 읽는다.
+인증·LLM 전환·감사·Core Zone 조회 — 과 데이터 소스 기본값만 다룬다.
+
+[역할 분리, docs/CONTRACT.md §11] 이 서버는 OpenDART·공공데이터포털 키를 갖지 않는다. 공시·재무·시세 원자료는
+Spring 내부 데이터 API(RADAR_SERVICE_URL, 키 RADAR_SERVICE_KEY)로만 받는다. 기본 RADAR_SOURCE=service이고,
+테스트(conftest)·CLI 단독 실행만 sample을 쓴다. radar는 환경변수를 읽으므로 아래 값을 환경변수 기본값으로 내려 준다.
 """
+import os
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -40,6 +46,11 @@ class Settings(BaseSettings):
     # 검증 반려 후 관련 서술 연결을 다시 돌리는 최대 횟수. radar의 MAX_VERIFY_RETRIES와 같은 값
     agent_max_revisions: int = 2
 
+    # 데이터 소스 — Spring 내부 데이터 API(§11.2). AI 서버 키(ai_server_api_key)와 다른 값
+    radar_source: str = "service"                   # service | sample(테스트·데모)
+    radar_service_url: str = "http://localhost:8180/internal/data"
+    radar_service_key: str = "dev-data-internal-key"
+
     # Core Zone(발행 원장) — 조회 키만. 시스템 키는 이 서버에 두지 않는다
     core_base_url: str = "http://localhost:9100"
     core_api_key: str = "dev-core-read-key"
@@ -51,3 +62,8 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# radar.config.Settings는 os.environ만 본다. .env·기본값을 환경변수 기본값으로 내려 준다(이미 있는 값은 덮지 않는다)
+for _k, _v in (("RADAR_SOURCE", settings.radar_source), ("RADAR_SERVICE_URL", settings.radar_service_url),
+               ("RADAR_SERVICE_KEY", settings.radar_service_key)):
+    os.environ.setdefault(_k, _v)

@@ -371,7 +371,7 @@ class Valuation(BaseModel):
     notes: list[str]
 
 
-# ---- 기업 목록·상세 (§6.6, /ai/companies 응답. Report에는 들어가지 않음) -------------------------
+# ---- 기업 목록·상세 (§6.6, Spring /api/companies 응답 — 분리 전 /ai/companies. Report에는 들어가지 않음) ----------
 class CompanyRow(BaseModel):
     corpCode: str
     corpName: str

@@ -7,17 +7,17 @@ from pathlib import Path
 
 from radar import graph as g
 from radar.business import extract_business
-from radar.company import company_profile, search_companies
+from radar.insights import document_insights
 from radar.config import ROOT, Settings
 from radar.formula import texts
 from radar.governance import build_governance, known_names
 from radar.parser import parse_filing_zip
-from radar.schemas import CompanyProfile, CompanyRow, Report
+from radar.schemas import Report
 from radar.service import run_analysis
 from radar.sources import SampleSource
 from radar.verify import banned_hits
 
-DATA = ROOT / "samples" / "data" / "filings"
+DATA = ROOT.parent / "samples" / "data" / "filings"
 OLD, NEW = "20250318000412", "20260317000388"
 REQ = {"company": "999001", "bsns_year": 2025, "reprt_code": "11011"}
 
@@ -97,10 +97,8 @@ class ReportExtensionTest(unittest.TestCase):
                      self.rep["reviewIssues"]])
         self.assertGreater(len(gen), 100)
         self.assertEqual([h for t in gen for h in banned_hits(t)], [])
-        prof = company_profile(sample(), "00999001")
-        self.assertEqual([h for t in texts(prof) for h in banned_hits(t)], [])
-        rows = search_companies(sample())
-        self.assertEqual([h for t in texts(rows) for h in banned_hits(t)], [])
+        ins = document_insights(sample(), "00999001")         # 기업 상세에 붙는 문서 파생 정보
+        self.assertEqual([h for t in texts(ins) for h in banned_hits(t)], [])
 
     def test_old_report_without_new_keys_still_validates(self):
         old = copy.deepcopy(self.rep)
@@ -200,56 +198,6 @@ class GovernanceTest(unittest.TestCase):
         kinds = {c["kind"] for c in self.gv["changes"]}
         self.assertEqual(kinds, {"주주", "임원", "출자"})
         self.assertEqual(self.gv["priorRceptNo"], OLD)
-
-
-class CompanyTest(unittest.TestCase):
-    def test_search(self):
-        rows = search_companies(sample(), "")
-        self.assertEqual(len(rows), 46)          # 본 회사 1 + 피어 29 + 시장 화면용 다른 업종 16
-        for r in rows:
-            CompanyRow.model_validate(r)
-        main = rows[0]
-        self.assertEqual((main["corpCode"], main["hasFilings"]), ("00999001", True))
-        self.assertEqual(main["opMarginPct"], round(40_500 / 1_012_000 * 100, 2))
-        self.assertIsNotNone(main["per"])
-        self.assertEqual([r["stockCode"] for r in search_companies(sample(), "피어기업12")], ["888012"])
-        self.assertEqual(len(search_companies(sample(), "피어", limit=5)), 5)
-        self.assertEqual(search_companies(sample(), "999001")[0]["corpName"], "샘플소재㈜")
-        # 재무가 없는 기업은 빈 값이지 0이 아니다. 시가총액은 시세로 나온다
-        bank = search_companies(sample(), "가상은행")[0]
-        self.assertEqual((bank["revenue"], bank["per"]), (None, None))
-        self.assertGreater(bank["marketCap"], 0)
-
-    def test_profile(self):
-        p = company_profile(sample(), "00999001")
-        CompanyProfile.model_validate(p)
-        fin = p["financials"]
-        self.assertEqual(fin["columns"], ["2023", "2024", "2025"])
-        rows = {r["account"]: r for r in fin["rows"]}
-        self.assertEqual(rows["지배주주순이익"]["values"], [79_900 * 10**6, 87_200 * 10**6, 12_100 * 10**6])
-        self.assertEqual(rows["영업이익률(%)"]["values"][2], 4.0)
-        self.assertEqual(rows["영업이익률(%)"]["formulas"][2]["expr"], "영업이익 ÷ 매출액 × 100")
-        self.assertEqual([f["reprtCode"] for f in p["filings"]], ["11012", "11011", "11011"])
-        self.assertFalse(p["filings"][0]["hasDocument"])
-        self.assertEqual(p["business"]["summary"]["failed"], 1)
-        self.assertEqual(len(p["governance"]["changes"]), 5)
-        self.assertEqual(p["valuation"]["interim"]["reprtCode"], "11012")
-
-    def test_peer_profile_has_gaps_not_zeros(self):
-        p = company_profile(sample(), "00888012")
-        CompanyProfile.model_validate(p)
-        rows = {r["account"]: r for r in p["financials"]["rows"]}
-        self.assertEqual(p["financials"]["columns"], ["2024", "2025"])
-        self.assertEqual(rows["자산총계"]["values"], [None, None])
-        self.assertEqual(rows["자산총계"]["formulas"][0]["status"], "계산 안 함")
-        self.assertIsNone(p["business"])
-        self.assertIsNone(p["governance"])
-        self.assertIn("대체 계정", p["valuation"]["metrics"][3]["inputs"][0]["note"])
-
-    def test_profile_without_market_permission(self):
-        p = company_profile(sample(), "00999001", include_valuation=False)
-        self.assertIsNone(p["valuation"])
-        self.assertTrue(p["valuationNote"])
 
 
 class StepwiseTest(unittest.TestCase):

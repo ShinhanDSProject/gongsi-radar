@@ -15,14 +15,15 @@ DART 정기보고서 두 건(전년 같은 보고서와 당기 보고서)을 비
 | 층 | 디렉터리 | 구성 | 포트 |
 |---|---|---|---|
 | DMZ | `frontend/` | React 18 + TypeScript + Vite + TanStack Query + Tailwind (`/api` 프록시) | 3100 |
-| Service Layer | `backend/` | Spring Boot 3 · Java 21 — JWT 인증, 분석 요청, 리포트 검토, 발행 결재(HITL), 감사·관리 API | 8180 |
-| AI Layer | `ai-server/` | FastAPI · LangChain · LangGraph — Manager-Worker 에이전트, Tool Gateway, RAG(Chroma), 가드레일, LLM 전환 | 8100 |
-| 도메인 라이브러리 | `ai-server/radar/` | 공시 파서·문단 정렬·수치·관련 서술·코드 검증·사업 지표·지배구조·TTM/PER/PBR | — |
+| Service Layer (데이터·업무) | `backend/` | Spring Boot 3 · Java 21 — JWT 인증, 분석 요청, 리포트 검토, 발행 결재(HITL), 감사·관리 API, **OpenDART·공공데이터포털 연동과 일일 수집**, 기업·시장 화면 데이터 계산, AI 서버용 내부 데이터 API | 8180 |
+| AI Layer (AI·문서 분석) | `ai-server/` | FastAPI · LangChain · LangGraph — Manager-Worker 에이전트, Tool Gateway, RAG(Chroma), 가드레일, LLM 전환. **원천 키 없음** — 데이터는 Spring 내부 API로만 받는다 | 8100 |
+| 분석 라이브러리 | `ai-server/radar/` | 공시 파서·문단 정렬·수치·관련 서술·코드 검증·사업 지표·지배구조 변동·TTM/PER/PBR(리포트용) | — |
 | Core Zone | `core-service/` | FastAPI + SQLite — **리포트 발행 원장**(조회 키/시스템 키 분리, 멱등성, 상태 머신) | 9100 |
 | Local LLM | Ollama | `qwen2.5:7b`, 임베딩 `bge-m3` (폐쇄망 모드) | 11434 |
 | DB | Docker `gongsi-mariadb` | MariaDB 11, DB `gongsi` | 3307 |
 
 브라우저는 Spring Boot(`/api`)만 부릅니다. FastAPI·Core는 내부 키를 가진 서버끼리만 부릅니다.
+역할 경계(docs/CONTRACT.md §11): **Spring = 데이터·업무**(원천 연동·수집·화면 데이터·인증·결재·감사), **FastAPI = AI·문서 분석**(에이전트·공시 비교·검증·RAG·가드레일·LLM).
 계층 간 경로·필드·키는 [`docs/CONTRACT.md`](docs/CONTRACT.md)가 정본입니다.
 
 ```mermaid
@@ -33,8 +34,10 @@ flowchart LR
   BE -->|X-System-Key 쓰기| CORE[core-service :9100<br/>발행 원장]
   AI -->|조회 키만| CORE
   AI --> TG{{Tool Gateway<br/>Kill Switch · Rate Limit · Scope}}
-  TG --> RADAR[radar 라이브러리<br/>DART 샘플 / OpenDART]
+  TG --> RADAR[radar 분석 라이브러리]
+  RADAR -->|X-Internal-API-Key<br/>/internal/data| BE
   TG --> RAG[(Chroma<br/>공시 문단)]
+  BE -->|원천 키는 여기만| SRC[OpenDART · 공공데이터포털<br/>또는 가상 샘플]
   AI --> LLM[LLM Adapter<br/>openai · ollama · mock]
   BE --> DB[(MariaDB :3307)]
   AI -->|감사 계정| DB
@@ -73,12 +76,12 @@ DRAFT ─발행 요청─→ PENDING ─Senior 승인─→ PUBLISHED ─(정정
 
 | 기능 | 어디서 |
 |---|---|
-| 계산식·출처 펼치기 — 모든 증감률·플래그·TTM·PER·PBR에 계산식, 입력값, 출처(접수번호·필드·연결/별도) | `radar/formula.py`, 화면의 "계산식" |
-| 사업 지표 추출·검산 — 부문 매출·수주·생산능력·가동률을 구조가 명확한 표에서만 규칙 추출, 산술 검산 통과분만 사용 | `radar/business.py` |
-| 기업 목록·검색·상세 — 매출·영업이익률·시가총액·PER·PBR, 재무·시장·지배구조·공시 목록 | `radar/company.py`, `/companies` |
-| 지배구조·관계망 — 최대주주·임원·타법인출자 변동과 관계 그래프(목록에 있는 회사는 링크) | `radar/governance.py` |
-| TTM·PER·PBR — 최근 연간 + 당해 누적 − 전년 누적, 지배주주 계정(없으면 대체 계정 표시), 이익 ≤ 0이면 계산 안 함 | `radar/valuation.py` |
-| 시장 화면 — 지수 추이(공식 지수 키가 없으면 '대체 지수'로 표시), 시가총액 추이, KSIC 업종 지도(트리맵·드릴다운), 최근 정기보고서 | `radar/market.py`, `/market` |
+| 계산식·출처 펼치기 — 모든 증감률·플래그·TTM·PER·PBR에 계산식, 입력값, 출처(접수번호·필드·연결/별도) | Spring `radar/Formulas`(화면 데이터)·Python `radar/formula.py`(리포트), 화면의 "계산식" |
+| 사업 지표 추출·검산 — 부문 매출·수주·생산능력·가동률을 구조가 명확한 표에서만 규칙 추출, 산술 검산 통과분만 사용 | AI `radar/business.py`(원문 표 분석) |
+| 기업 목록·검색·상세 — 매출·영업이익률·시가총액·PER·PBR, 재무·시장·지배구조·공시 목록 | Spring `company/CompanyService`, `/companies` |
+| 지배구조·관계망 — 최대주주·임원·타법인출자 변동과 관계 그래프(목록에 있는 회사는 링크) | AI `radar/governance.py` |
+| TTM·PER·PBR — 최근 연간 + 당해 누적 − 전년 누적, 지배주주 계정(없으면 대체 계정 표시), 이익 ≤ 0이면 계산 안 함 | Spring `radar/Valuations`(화면)·Python `radar/valuation.py`(리포트) — 같은 결과를 골든 테스트로 고정 |
+| 시장 화면 — 지수 추이(공식 지수 키가 없으면 '대체 지수'로 표시), 시가총액 추이, KSIC 업종 지도(트리맵·드릴다운), 최근 정기보고서 | Spring `market/MarketOverviewService`, `/market` |
 
 ## 실행 방법
 
@@ -156,20 +159,29 @@ scripts/db.sh down       # MariaDB 컨테이너 정지(데이터는 남는다. �
 
 같은 회사·기간을 다시 승인하면 정정 발행(v2)으로 처리되고 v1은 SUPERSEDED가 된다.
 
-### 5. 설정 바꾸기 (`ai-server/.env`)
+### 5. 설정 바꾸기
+
+**데이터(Spring, 백엔드 환경변수)** — `backend/src/main/resources/application.yaml` 기본값을 환경변수로 덮어쓴다.
+
+| 하고 싶은 것 | 설정 | 비고 |
+|---|---|---|
+| 실제 공시(OpenDART) | `GONGSI_DATA_SOURCE=opendart`, `OPENDART_API_KEY=…` | https://opendart.fss.or.kr 에서 무료 발급. 응답은 `backend/.cache/`에 캐시 |
+| 실제 시세·지수 | `DATA_GO_KR_API_KEY=…`(디코딩 키) | 공공데이터포털 금융위원회_주식시세정보·지수시세정보. 없으면 PER·PBR은 "계산 안 함", 지수는 '대체 지수' |
+| 업종 피어(robust z) | `GONGSI_PEERS_FILE=피어고유번호.json` | 다중회사 주요계정 API, 100개사씩 |
+| 일일 수집 예약 | `GONGSI_INGEST_CRON="0 30 18 * * MON-FRI"` | 기본 꺼짐. 아래 7번 |
+
+그 밖에 `AI_SERVER_API_KEY`, `DATA_API_KEY`(AI 서버 → Spring 내부 데이터 API), `CORE_SYSTEM_KEY`, `JWT_SECRET`, `MARIADB_*` 등. 운영에서는 개발용 기본 키를 반드시 바꾼다.
+
+**AI(`ai-server/.env`)** — 원천 API 키는 두지 않는다.
 
 | 하고 싶은 것 | 설정 | 비고 |
 |---|---|---|
 | OpenAI로 서술 생성 | `LLM_PROVIDER=openai`, `OPENAI_API_KEY=…` | 관리 화면에서 런타임 전환도 된다(재기동하면 `.env` 값) |
 | 폐쇄망 모드 | `LLM_PROVIDER=ollama`, `EMBEDDING_PROVIDER=ollama`, `ALLOW_EXTERNAL_LLM=false` | `ollama serve` 필요. 외부 provider는 목록에 `blocked`로 남는다. 분석 1건 약 7분 |
-| 실제 공시(OpenDART) | `RADAR_SOURCE=opendart`, `OPENDART_API_KEY=…` | https://opendart.fss.or.kr 에서 무료 발급. 응답은 `ai-server/.cache/`에 캐시 |
-| 실제 시세·지수 | `DATA_GO_KR_API_KEY=…`(디코딩 키) | 공공데이터포털 금융위원회_주식시세정보·지수시세정보. 없으면 PER·PBR은 "계산 안 함", 지수는 '대체 지수' |
+| 데이터 받는 곳 | `RADAR_SOURCE=service`, `RADAR_SERVICE_URL`, `RADAR_SERVICE_KEY` | 기본값 그대로 쓴다(Spring 내부 데이터 API). 데이터가 가상 샘플이면 리포트에 '가상 기업 샘플'로 표시된다 |
 
-실데이터 경로(OpenDART·공공데이터포털)는 응답 문서에 맞춰 구현했지만 실키로는 아직 검증하지 않았다. 12월 결산 법인만 지원하고,
-은행·보험·증권은 손익 구조가 달라 결과를 신뢰하기 어렵다. 키는 `.env`에만 두고 커밋하지 않는다.
-
-백엔드 설정은 `backend/src/main/resources/application.yaml` 기본값을 쓰고 환경변수로 덮어쓴다
-(`MARIADB_USER`, `AI_SERVER_API_KEY`, `CORE_SYSTEM_KEY`, `JWT_SECRET` 등). 운영에서는 개발용 기본 키를 반드시 바꾼다.
+실데이터 경로(OpenDART·공공데이터포털)는 응답 문서에 맞춰 구현했지만 실키로는 아직 검증하지 않았다(#1). 12월 결산 법인만 지원하고,
+은행·보험·증권은 손익 구조가 달라 결과를 신뢰하기 어렵다. 키는 환경변수·`.env`에만 두고 커밋하지 않는다.
 
 ### 6. 문제가 생기면
 
@@ -185,30 +197,28 @@ scripts/db.sh down       # MariaDB 컨테이너 정지(데이터는 남는다. �
 
 ### 7. 일일 수집(전 종목 적재)
 
-기업 목록·시장 화면·업종 지도를 전 종목으로 보려면 하루 한 번 수집을 돌린다. 수집은 서버가 아니라 예약 작업(cron)이 수집 전용 DB 계정으로 돌린다.
+기업 목록·시장 화면·업종 지도를 전 종목으로 보려면 하루 한 번 수집을 돌린다. 수집은 Spring이 수집 전용 DB 계정(`gongsi_ingest`)으로 한다.
+화면에서 시작하는 버튼은 없다.
 
 ```bash
-cd ai-server
-export RADAR_INGEST_WRITE_DB="mysql+pymysql://gongsi_ingest:ingest-pass@localhost:3307/gongsi?charset=utf8mb4"
-export RADAR_AUDIT_DB="mysql+pymysql://gongsi_audit:audit-only-pass@localhost:3307/gongsi?charset=utf8mb4"
-.venv/bin/python -m radar ingest daily --budget 15000   # 상장사·최근 공시·시세·지수·재무·업종·원문 증분
-.venv/bin/python -m radar ingest backfill --years 3     # 회사별 지난 정기공시·재무(여러 날에 걸쳐 이어서)
-.venv/bin/python -m radar ingest status                 # 최근 실행 기록
+cd backend
+./gradlew bootRun --args='--gongsi.ingest.run-once=daily'      # 상장사·최근 공시·시세·지수·재무·업종·원문 증분(웹 서버 없이 돌고 끝남)
+./gradlew bootRun --args='--gongsi.ingest.run-once=backfill'   # 회사별 지난 정기공시·재무(여러 날에 걸쳐 이어서)
+GONGSI_INGEST_CRON="0 30 18 * * MON-FRI" ./gradlew bootRun     # 서버를 띄우면서 예약 실행
 ```
 
-- 같은 날 두 번 돌려도 결과가 같고, 호출 예산이 떨어지면 다음 실행이 이어서 처리한다. Kill Switch가 켜져 있으면 수집도 멈춘다.
-- 서버는 `ai-server/.env`의 `RADAR_INGEST_DB`(앱 계정, 읽기)로 적재 DB를 먼저 읽고, 비어 있으면 원천을 쓴다.
+- 같은 날 두 번 돌려도 결과가 같고(upsert), 호출 예산(`INGEST_DAILY_BUDGET`, 기본 15,000)이 떨어지면 다음 실행이 이어서 처리한다.
+- Kill Switch가 켜져 있으면 수집도 멈춘다. 실행마다 감사 로그에 `INGEST_RUN`이 남는다.
+- 화면 데이터는 적재 DB를 먼저 읽고, 비어 있으면 원천(샘플·OpenDART)을 쓴다.
 - 관리 화면 "데이터 수집"에서 마지막 수집 시각·단계별 결과·남은 호출 예산을 본다.
 
-### 8. 도메인 라이브러리만 쓰기
+### 8. 분석 라이브러리만 쓰기
 
-서버 없이 `radar` 라이브러리만 돌릴 수 있다.
+서버 없이 `radar` 분석 라이브러리만 샘플로 돌릴 수 있다(기업 목록·시장 화면·수집은 Spring 몫이라 여기에는 없다).
 
 ```bash
 cd ai-server
 .venv/bin/python -m radar demo --fault           # 샘플 분석 → out/report.json
-.venv/bin/python -m radar companies 샘플          # 기업 검색
-.venv/bin/python -m radar company 999001          # 기업 상세 요약
 .venv/bin/python -m radar parse 원문.zip --blocks  # DART 원문 파싱 통계
 ```
 
@@ -229,7 +239,7 @@ cd ai-server
 | root | DDL 적용(사람) | 전부 |
 | `gongsi_app` | Spring·FastAPI 런타임 | 업무 테이블 읽기·쓰기, 감사 테이블 읽기만, DELETE 없음 |
 | `gongsi_audit` | 감사 기록 전용 커넥션 | 감사 테이블 INSERT·SELECT만(append-only, `prev_hash` 해시 체인) |
-| `gongsi_ingest` | 일일 수집 작업 | 적재 테이블 SELECT·INSERT·UPDATE만(DELETE 없음) |
+| `gongsi_ingest` | Spring 일일 수집(전용 커넥션) | 적재 테이블 SELECT·INSERT·UPDATE만(DELETE 없음) |
 
 ## 테스트
 

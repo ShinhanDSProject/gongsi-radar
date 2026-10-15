@@ -1,5 +1,8 @@
 """공시·재무·지배구조·시장 Tool. 모두 조회(Read)다.
 
+데이터는 radar 소스로 받는다. AI 서버에서는 RADAR_SOURCE=service — Spring 내부 데이터 API(docs/CONTRACT.md §11.2)이고
+원천 키는 이 서버에 없다. 시장 지표(get_valuation)는 Spring이 준 원천 재무·시세로 radar가 계산한다.
+
 Tool 인자는 LLM이 채울 수 있는 값(회사·연도·보고서)만 받는다. 어느 분석(job) 안에서 불렸는지는
 contextvar로 알고, 같은 분석의 Worker들은 radar 세션 하나를 나눠 쓴다(services/radar_session.py).
 
@@ -29,17 +32,11 @@ def _filing_brief(f: dict) -> dict:
             "url": f.get("url")}
 
 
-# ---- 기업 ------------------------------------------------------------------------------
-def search_companies(query: str = "", limit: int = 20) -> List[Dict[str, Any]]:
-    from radar.company import search_companies as _search
-    return _search(_source(), query or "", limit=min(max(int(limit), 1), 200))
-
-
-def get_company_profile(corp_code: str) -> Dict[str, Any]:
-    """기업 상세(재무·사업 지표·지배구조·공시 목록). 시장 지표는 MARKET_DATA_READ가 따로 필요해 여기서 뺀다."""
-    from radar.company import company_profile
-    return company_profile(_source(), corp_code, include_valuation=False,
-                           valuation_note="MARKET_DATA_READ 권한으로 따로 조회합니다.")
+# ---- 기업 상세의 원문 파생 정보 --------------------------------------------------------------
+def get_document_insights(corp_code: str) -> Dict[str, Any]:
+    """사업 지표·지배구조(원문을 읽어야 나오는 부분). Spring 기업 상세가 business·governance 칸을 채우려고 부른다."""
+    from radar.insights import document_insights
+    return document_insights(_source(), str(corp_code).strip())
 
 
 # ---- 분석 세션 기반 ----------------------------------------------------------------------
@@ -120,16 +117,10 @@ def get_lawsuits(company: str, bsns_year: int, reprt_code: str = "11011") -> Lis
 
 
 def get_valuation(company: str) -> Dict[str, Any]:
-    """TTM·PER·PBR(계산식·출처 포함). 판단 문구는 만들지 않는다."""
+    """TTM·PER·PBR(계산식·출처 포함). 판단 문구는 만들지 않는다. 원자료(재무·시세)는 소스(Spring)에서 받는다."""
     from radar.valuation import compute_valuation
     src = _source()
     return compute_valuation(src, src.resolve(str(company)))
-
-
-def get_market_overview(market: str = "ALL") -> Dict[str, Any]:
-    """시장 화면: 지수 추이·시가총액 추이·업종 지도(KSIC)·최근 정기보고서(docs/CONTRACT.md §9)."""
-    from radar.market import market_overview
-    return market_overview(_source(), market)
 
 
 def get_stock_price(stock_code: str, days: int = 5) -> List[Dict[str, Any]]:

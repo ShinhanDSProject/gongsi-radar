@@ -49,7 +49,7 @@ from .governance import build_governance, known_names
 from .llm import PRICE_PER_M, RuleLLM, make_llm
 from .parser import ParsedDoc, parse_filing_zip
 from .relate import direction, numeric_claims, rule_relate, top_candidates_for_llm
-from .sources import REPRT, SourceError, make_source
+from .sources import REPRT, data_origin, SourceError, make_source
 from .tables import diff_tables
 from .textutil import josa, norm_ws
 from .valuation import gather_valuation_inputs, valuation_from_inputs
@@ -385,7 +385,7 @@ def report(state: RadarState) -> dict:
             "company": state["company"], "current": filing(cur), "prior": filing(prior),
             "source": ctx.source.name, "fs_div": state["fs_div"], "embedder": ctx.embedder.name, "llm": ctx.llm.name,
             "pipeline_version": PIPELINE_VERSION, "graph_engine": state.get("_engine", "builtin"),
-            "demo_fault_injection": s.demo_fault_injection, "sample_data": ctx.source.name == "sample",
+            "demo_fault_injection": s.demo_fault_injection, "sample_data": data_origin(ctx.source) == "sample",
             "disclaimer": DISCLAIMER,
         },
         "parse": {"current": docs["current"].stats(), "prior": docs["prior"].stats()},
