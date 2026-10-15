@@ -1,0 +1,28 @@
+# 도메인 라이브러리(radar/) — 공시 파싱·정렬·검증
+pydantic>=2.9.0
+requests>=2.31
+lxml>=5.0
+numpy>=1.26
+scikit-learn>=1.4
+
+# AI 서버(app/) — Quant-X 3~11장 스택
+fastapi>=0.115.0
+uvicorn[standard]>=0.32.0
+pydantic-settings>=2.6.0
+python-dotenv>=1.0.0
+httpx>=0.27.0
+sqlalchemy>=2.0.0              # MariaDB 접속(실행 이력·감사·Kill Switch)
+pymysql>=1.1.0
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-openai>=0.2.0
+langchain-ollama>=0.2.0        # 폐쇄망: ChatOllama(bind_tools) · OllamaEmbeddings(bge-m3)
+langchain-chroma>=0.1.4
+langchain-classic>=1.0.0       # AgentExecutor · create_tool_calling_agent
+langchain-text-splitters>=0.3.0
+chromadb>=0.5.0
+langgraph>=1.0,<2.0            # Manager-Worker 그래프
+pytest>=8.0.0
+
+# 선택: KURE-v1 / Qwen3 임베딩 (radar 정렬용, RADAR_EMBEDDER=kure | qwen3)
+# sentence-transformers>=3.0

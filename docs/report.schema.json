@@ -84,6 +84,14 @@
     "peer_n": {
      "title": "Peer N",
      "type": "integer"
+    },
+    "formulas": {
+     "default": [],
+     "items": {
+      "$ref": "#/$defs/Formula"
+     },
+     "title": "Formulas",
+     "type": "array"
     }
    },
    "required": [
@@ -102,6 +110,24 @@
     "peer_n"
    ],
    "title": "Account",
+   "type": "object"
+  },
+  "AnnualRef": {
+   "properties": {
+    "year": {
+     "title": "Year",
+     "type": "integer"
+    },
+    "rceptNo": {
+     "title": "Rceptno",
+     "type": "string"
+    }
+   },
+   "required": [
+    "year",
+    "rceptNo"
+   ],
+   "title": "AnnualRef",
    "type": "object"
   },
   "Attempt": {
@@ -135,6 +161,235 @@
     "statement"
    ],
    "title": "Attempt",
+   "type": "object"
+  },
+  "Business": {
+   "properties": {
+    "groups": {
+     "items": {
+      "$ref": "#/$defs/BusinessGroup"
+     },
+     "title": "Groups",
+     "type": "array"
+    },
+    "summary": {
+     "$ref": "#/$defs/BusinessSummary"
+    },
+    "note": {
+     "title": "Note",
+     "type": "string"
+    }
+   },
+   "required": [
+    "groups",
+    "summary",
+    "note"
+   ],
+   "title": "Business",
+   "type": "object"
+  },
+  "BusinessGroup": {
+   "properties": {
+    "kind": {
+     "enum": [
+      "부문 매출",
+      "수주",
+      "생산능력·가동률"
+     ],
+     "title": "Kind",
+     "type": "string"
+    },
+    "title": {
+     "title": "Title",
+     "type": "string"
+    },
+    "unit": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Unit"
+    },
+    "sectionPath": {
+     "title": "Sectionpath",
+     "type": "string"
+    },
+    "priorPid": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Priorpid"
+    },
+    "currentPid": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Currentpid"
+    },
+    "checks": {
+     "items": {
+      "$ref": "#/$defs/Check"
+     },
+     "title": "Checks",
+     "type": "array"
+    },
+    "rows": {
+     "items": {
+      "$ref": "#/$defs/BusinessRow"
+     },
+     "title": "Rows",
+     "type": "array"
+    },
+    "formulas": {
+     "items": {
+      "$ref": "#/$defs/Formula"
+     },
+     "title": "Formulas",
+     "type": "array"
+    }
+   },
+   "required": [
+    "kind",
+    "title",
+    "unit",
+    "sectionPath",
+    "priorPid",
+    "currentPid",
+    "checks",
+    "rows",
+    "formulas"
+   ],
+   "title": "BusinessGroup",
+   "type": "object"
+  },
+  "BusinessRow": {
+   "properties": {
+    "label": {
+     "title": "Label",
+     "type": "string"
+    },
+    "status": {
+     "enum": [
+      "검산 통과",
+      "검산 불일치",
+      "검산 불가"
+     ],
+     "title": "Status",
+     "type": "string"
+    },
+    "values": {
+     "items": {
+      "$ref": "#/$defs/BusinessValue"
+     },
+     "title": "Values",
+     "type": "array"
+    },
+    "checks": {
+     "items": {
+      "$ref": "#/$defs/Check"
+     },
+     "title": "Checks",
+     "type": "array"
+    }
+   },
+   "required": [
+    "label",
+    "status",
+    "values",
+    "checks"
+   ],
+   "title": "BusinessRow",
+   "type": "object"
+  },
+  "BusinessSummary": {
+   "properties": {
+    "passed": {
+     "title": "Passed",
+     "type": "integer"
+    },
+    "failed": {
+     "title": "Failed",
+     "type": "integer"
+    },
+    "unchecked": {
+     "title": "Unchecked",
+     "type": "integer"
+    }
+   },
+   "required": [
+    "passed",
+    "failed",
+    "unchecked"
+   ],
+   "title": "BusinessSummary",
+   "type": "object"
+  },
+  "BusinessValue": {
+   "properties": {
+    "name": {
+     "title": "Name",
+     "type": "string"
+    },
+    "unit": {
+     "title": "Unit",
+     "type": "string"
+    },
+    "prior": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Prior"
+    },
+    "current": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Current"
+    },
+    "yoyPct": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Yoypct"
+    }
+   },
+   "required": [
+    "name",
+    "unit",
+    "prior",
+    "current",
+    "yoyPct"
+   ],
+   "title": "BusinessValue",
    "type": "object"
   },
   "ChangeItem": {
@@ -324,6 +579,62 @@
    "title": "DiffOp",
    "type": "object"
   },
+  "Executive": {
+   "properties": {
+    "name": {
+     "title": "Name",
+     "type": "string"
+    },
+    "position": {
+     "title": "Position",
+     "type": "string"
+    },
+    "registered": {
+     "title": "Registered",
+     "type": "boolean"
+    },
+    "fullTime": {
+     "title": "Fulltime",
+     "type": "boolean"
+    },
+    "duty": {
+     "title": "Duty",
+     "type": "string"
+    },
+    "change": {
+     "enum": [
+      "신규 선임",
+      "퇴임",
+      "직위 변경",
+      "유지"
+     ],
+     "title": "Change",
+     "type": "string"
+    },
+    "priorPosition": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Priorposition"
+    }
+   },
+   "required": [
+    "name",
+    "position",
+    "registered",
+    "fullTime",
+    "duty",
+    "change",
+    "priorPosition"
+   ],
+   "title": "Executive",
+   "type": "object"
+  },
   "Filing": {
    "properties": {
     "rcept_no": {
@@ -360,6 +671,427 @@
     "url"
    ],
    "title": "Filing",
+   "type": "object"
+  },
+  "Formula": {
+   "properties": {
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "label": {
+     "title": "Label",
+     "type": "string"
+    },
+    "expr": {
+     "title": "Expr",
+     "type": "string"
+    },
+    "inputs": {
+     "items": {
+      "$ref": "#/$defs/FormulaInput"
+     },
+     "title": "Inputs",
+     "type": "array"
+    },
+    "result": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Result"
+    },
+    "unit": {
+     "title": "Unit",
+     "type": "string"
+    },
+    "status": {
+     "enum": [
+      "계산됨",
+      "계산 안 함"
+     ],
+     "title": "Status",
+     "type": "string"
+    },
+    "reason": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "description": "계산 안 함일 때 사유(값을 0으로 바꾸지 않음)",
+     "title": "Reason"
+    },
+    "notes": {
+     "default": [],
+     "items": {
+      "type": "string"
+     },
+     "title": "Notes",
+     "type": "array"
+    }
+   },
+   "required": [
+    "id",
+    "label",
+    "expr",
+    "inputs",
+    "result",
+    "unit",
+    "status"
+   ],
+   "title": "Formula",
+   "type": "object"
+  },
+  "FormulaInput": {
+   "properties": {
+    "name": {
+     "title": "Name",
+     "type": "string"
+    },
+    "value": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Value"
+    },
+    "unit": {
+     "title": "Unit",
+     "type": "string"
+    },
+    "source": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/Source"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null
+    },
+    "note": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Note"
+    }
+   },
+   "required": [
+    "name",
+    "value",
+    "unit"
+   ],
+   "title": "FormulaInput",
+   "type": "object"
+  },
+  "Governance": {
+   "properties": {
+    "rceptNo": {
+     "title": "Rceptno",
+     "type": "string"
+    },
+    "priorRceptNo": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Priorrceptno"
+    },
+    "shareholders": {
+     "items": {
+      "$ref": "#/$defs/Shareholder"
+     },
+     "title": "Shareholders",
+     "type": "array"
+    },
+    "executives": {
+     "items": {
+      "$ref": "#/$defs/Executive"
+     },
+     "title": "Executives",
+     "type": "array"
+    },
+    "investments": {
+     "items": {
+      "$ref": "#/$defs/Investment"
+     },
+     "title": "Investments",
+     "type": "array"
+    },
+    "changes": {
+     "items": {
+      "$ref": "#/$defs/GovernanceChange"
+     },
+     "title": "Changes",
+     "type": "array"
+    },
+    "graph": {
+     "$ref": "#/$defs/GovernanceGraph"
+    },
+    "note": {
+     "title": "Note",
+     "type": "string"
+    }
+   },
+   "required": [
+    "rceptNo",
+    "priorRceptNo",
+    "shareholders",
+    "executives",
+    "investments",
+    "changes",
+    "graph",
+    "note"
+   ],
+   "title": "Governance",
+   "type": "object"
+  },
+  "GovernanceChange": {
+   "properties": {
+    "kind": {
+     "enum": [
+      "주주",
+      "임원",
+      "출자"
+     ],
+     "title": "Kind",
+     "type": "string"
+    },
+    "text": {
+     "title": "Text",
+     "type": "string"
+    }
+   },
+   "required": [
+    "kind",
+    "text"
+   ],
+   "title": "GovernanceChange",
+   "type": "object"
+  },
+  "GovernanceGraph": {
+   "properties": {
+    "nodes": {
+     "items": {
+      "$ref": "#/$defs/GraphNode"
+     },
+     "title": "Nodes",
+     "type": "array"
+    },
+    "edges": {
+     "items": {
+      "$ref": "#/$defs/GraphEdge"
+     },
+     "title": "Edges",
+     "type": "array"
+    }
+   },
+   "required": [
+    "nodes",
+    "edges"
+   ],
+   "title": "GovernanceGraph",
+   "type": "object"
+  },
+  "GraphEdge": {
+   "properties": {
+    "from": {
+     "title": "From",
+     "type": "string"
+    },
+    "to": {
+     "title": "To",
+     "type": "string"
+    },
+    "pct": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Pct"
+    },
+    "label": {
+     "title": "Label",
+     "type": "string"
+    }
+   },
+   "required": [
+    "from",
+    "to",
+    "pct",
+    "label"
+   ],
+   "title": "GraphEdge",
+   "type": "object"
+  },
+  "GraphNode": {
+   "properties": {
+    "id": {
+     "title": "Id",
+     "type": "string"
+    },
+    "label": {
+     "title": "Label",
+     "type": "string"
+    },
+    "kind": {
+     "enum": [
+      "company",
+      "shareholder",
+      "person",
+      "investee"
+     ],
+     "title": "Kind",
+     "type": "string"
+    },
+    "corpCode": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Corpcode"
+    }
+   },
+   "required": [
+    "id",
+    "label",
+    "kind",
+    "corpCode"
+   ],
+   "title": "GraphNode",
+   "type": "object"
+  },
+  "InterimRef": {
+   "properties": {
+    "year": {
+     "title": "Year",
+     "type": "integer"
+    },
+    "reprtCode": {
+     "title": "Reprtcode",
+     "type": "string"
+    },
+    "rceptNo": {
+     "title": "Rceptno",
+     "type": "string"
+    }
+   },
+   "required": [
+    "year",
+    "reprtCode",
+    "rceptNo"
+   ],
+   "title": "InterimRef",
+   "type": "object"
+  },
+  "Investment": {
+   "properties": {
+    "name": {
+     "title": "Name",
+     "type": "string"
+    },
+    "purpose": {
+     "title": "Purpose",
+     "type": "string"
+    },
+    "beginPct": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Beginpct"
+    },
+    "endPct": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Endpct"
+    },
+    "bookValue": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Bookvalue"
+    },
+    "change": {
+     "enum": [
+      "신규",
+      "처분",
+      "지분 증가",
+      "지분 감소",
+      "변동 없음"
+     ],
+     "title": "Change",
+     "type": "string"
+    },
+    "corpCode": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Corpcode"
+    }
+   },
+   "required": [
+    "name",
+    "purpose",
+    "beginPct",
+    "endPct",
+    "bookValue",
+    "change",
+    "corpCode"
+   ],
+   "title": "Investment",
    "type": "object"
   },
   "Meta": {
@@ -665,6 +1397,73 @@
    "title": "ParseStats",
    "type": "object"
   },
+  "PricePoint": {
+   "properties": {
+    "d": {
+     "title": "D",
+     "type": "string"
+    },
+    "c": {
+     "title": "C",
+     "type": "number"
+    }
+   },
+   "required": [
+    "d",
+    "c"
+   ],
+   "title": "PricePoint",
+   "type": "object"
+  },
+  "PriceRef": {
+   "properties": {
+    "basDt": {
+     "title": "Basdt",
+     "type": "string"
+    },
+    "close": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Close"
+    },
+    "listedShares": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Listedshares"
+    },
+    "marketCap": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Marketcap"
+    }
+   },
+   "required": [
+    "basDt",
+    "close",
+    "listedShares",
+    "marketCap"
+   ],
+   "title": "PriceRef",
+   "type": "object"
+  },
   "Relation": {
    "properties": {
     "account_key": {
@@ -890,6 +1689,175 @@
    "title": "ReviewEvent",
    "type": "object"
   },
+  "Shareholder": {
+   "properties": {
+    "name": {
+     "title": "Name",
+     "type": "string"
+    },
+    "relation": {
+     "title": "Relation",
+     "type": "string"
+    },
+    "stockKind": {
+     "title": "Stockkind",
+     "type": "string"
+    },
+    "beginShares": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Beginshares"
+    },
+    "beginPct": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Beginpct"
+    },
+    "endShares": {
+     "anyOf": [
+      {
+       "type": "integer"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Endshares"
+    },
+    "endPct": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Endpct"
+    },
+    "change": {
+     "enum": [
+      "신규",
+      "증가",
+      "감소",
+      "전량 처분",
+      "변동 없음"
+     ],
+     "title": "Change",
+     "type": "string"
+    },
+    "deltaPct": {
+     "anyOf": [
+      {
+       "type": "number"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Deltapct"
+    }
+   },
+   "required": [
+    "name",
+    "relation",
+    "stockKind",
+    "beginShares",
+    "beginPct",
+    "endShares",
+    "endPct",
+    "change",
+    "deltaPct"
+   ],
+   "title": "Shareholder",
+   "type": "object"
+  },
+  "Source": {
+   "properties": {
+    "kind": {
+     "enum": [
+      "재무 API",
+      "원문 표",
+      "원문 문단",
+      "시세",
+      "계산",
+      "업종 피어"
+     ],
+     "title": "Kind",
+     "type": "string"
+    },
+    "label": {
+     "title": "Label",
+     "type": "string"
+    },
+    "rceptNo": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Rceptno"
+    },
+    "pid": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Pid"
+    },
+    "field": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Field"
+    },
+    "url": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "default": null,
+     "title": "Url"
+    }
+   },
+   "required": [
+    "kind",
+    "label"
+   ],
+   "title": "Source",
+   "type": "object"
+  },
   "TableCell": {
    "properties": {
     "row": {
@@ -1026,6 +1994,102 @@
    "title": "TableChange",
    "type": "object"
   },
+  "Valuation": {
+   "properties": {
+    "asOf": {
+     "anyOf": [
+      {
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Asof"
+    },
+    "marketSource": {
+     "anyOf": [
+      {
+       "enum": [
+        "sample",
+        "data.go.kr"
+       ],
+       "type": "string"
+      },
+      {
+       "type": "null"
+      }
+     ],
+     "title": "Marketsource"
+    },
+    "fsDiv": {
+     "enum": [
+      "CFS",
+      "OFS"
+     ],
+     "title": "Fsdiv",
+     "type": "string"
+    },
+    "annual": {
+     "$ref": "#/$defs/AnnualRef"
+    },
+    "interim": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/InterimRef"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "price": {
+     "anyOf": [
+      {
+       "$ref": "#/$defs/PriceRef"
+      },
+      {
+       "type": "null"
+      }
+     ]
+    },
+    "prices": {
+     "items": {
+      "$ref": "#/$defs/PricePoint"
+     },
+     "title": "Prices",
+     "type": "array"
+    },
+    "metrics": {
+     "description": "id: market_cap, ttm_revenue, ttm_op, ttm_ni_owner, per_ttm, per_annual, pbr",
+     "items": {
+      "$ref": "#/$defs/Formula"
+     },
+     "title": "Metrics",
+     "type": "array"
+    },
+    "notes": {
+     "items": {
+      "type": "string"
+     },
+     "title": "Notes",
+     "type": "array"
+    }
+   },
+   "required": [
+    "asOf",
+    "marketSource",
+    "fsDiv",
+    "annual",
+    "interim",
+    "price",
+    "prices",
+    "metrics",
+    "notes"
+   ],
+   "title": "Valuation",
+   "type": "object"
+  },
   "Verification": {
    "properties": {
     "status": {
@@ -1119,6 +2183,95 @@
    "additionalProperties": true,
    "title": "Metrics",
    "type": "object"
+  },
+  "business": {
+   "anyOf": [
+    {
+     "$ref": "#/$defs/Business"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null
+  },
+  "governance": {
+   "anyOf": [
+    {
+     "$ref": "#/$defs/Governance"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null
+  },
+  "valuation": {
+   "anyOf": [
+    {
+     "$ref": "#/$defs/Valuation"
+    },
+    {
+     "type": "null"
+    }
+   ],
+   "default": null
+  },
+  "title": {
+   "default": "",
+   "title": "Title",
+   "type": "string"
+  },
+  "summary": {
+   "default": "",
+   "title": "Summary",
+   "type": "string"
+  },
+  "citations": {
+   "default": [],
+   "items": {
+    "type": "string"
+   },
+   "title": "Citations",
+   "type": "array"
+  },
+  "toolCalls": {
+   "default": [],
+   "description": "{tool, args, resultSummary, agentId}[] (AI 서버가 채움)",
+   "items": {
+    "additionalProperties": true,
+    "type": "object"
+   },
+   "title": "Toolcalls",
+   "type": "array"
+  },
+  "reviewPassed": {
+   "default": true,
+   "title": "Reviewpassed",
+   "type": "boolean"
+  },
+  "reviewIssues": {
+   "default": [],
+   "items": {
+    "type": "string"
+   },
+   "title": "Reviewissues",
+   "type": "array"
+  },
+  "generatedAt": {
+   "default": "",
+   "title": "Generatedat",
+   "type": "string"
+  },
+  "agents": {
+   "default": [],
+   "description": "{agentId, stepOrder, status, durationMs, summary}[] (AI 서버가 채움)",
+   "items": {
+    "additionalProperties": true,
+    "type": "object"
+   },
+   "title": "Agents",
+   "type": "array"
   }
  },
  "required": [

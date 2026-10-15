@@ -1,0 +1,61 @@
+server:
+  port: 8180
+  servlet:
+    context-path: /
+
+spring:
+  application:
+    name: gongsi-backend
+  datasource:
+    # 최소 권한 계정. DELETE 권한이 없고 users·user_scopes는 읽기만,
+    # 감사 테이블(audit_log·guardrail_event·agent_tool_call_log)도 읽기만 된다.
+    # DDL 적용은 관리자(root) 계정으로 한다 — 관리자 작업과 런타임 작업의 자격 증명을 나눈다
+    url: ${MARIADB_URL:jdbc:mariadb://localhost:3307/gongsi?useUnicode=true&characterEncoding=utf8}
+    username: ${MARIADB_USER:gongsi_app}
+    password: ${MARIADB_PASSWORD:app-pass}
+    driver-class-name: org.mariadb.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate            # 스키마는 scripts/sql/*.sql이 정본. JPA는 맞는지 확인만 한다
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Seoul
+    open-in-view: false
+    show-sql: false
+  jackson:
+    time-zone: Asia/Seoul
+
+gongsi:
+  jwt:
+    secret: ${JWT_SECRET:DEV_ONLY_GONGSI_RADAR_JWT_SECRET_CHANGE_ME_IN_PROD_AT_LEAST_64_BYTES_LONG_0123456789}
+    expire-minutes: 60
+    refresh-expire-days: 7
+  ai-server:
+    base-url: ${AI_SERVER_BASE_URL:http://localhost:8100}
+    api-key: ${AI_SERVER_API_KEY:dev-ai-internal-key}
+    timeout-seconds: 60
+  core:                                                         # 리포트 발행 원장(Core Zone)
+    base-url: ${CORE_BASE_URL:http://localhost:9100}
+    # [보안] 쓰기용 시스템 키는 Spring에만 있다. AI 서버에는 조회 키(CORE_API_KEY)만 준다
+    system-key: ${CORE_SYSTEM_KEY:dev-core-system-key}
+    timeout-seconds: 10
+  audit:
+    # [보안] 감사 기록 전용 계정. audit_log·guardrail_event·agent_tool_call_log에
+    #        INSERT와 SELECT만 있고 UPDATE·DELETE가 없다. append-only를 DB 권한이 보장한다.
+    #        spring.datasource(애플리케이션 계정)와 반드시 다른 계정이어야 한다
+    url: ${MARIADB_AUDIT_URL:jdbc:mariadb://localhost:3307/gongsi?useUnicode=true&characterEncoding=utf8}
+    username: ${MARIADB_AUDIT_USER:gongsi_audit}
+    password: ${MARIADB_AUDIT_PASSWORD:audit-only-pass}
+
+logging:
+  level:
+    com.gongsiradar: INFO
+    org.springframework.security: INFO
+  pattern:
+    # MDC에 심어 둔 requestUid를 모든 로그 줄에 붙인다.
+    # RequestUidFilter가 요청 시작 때 넣고 끝날 때 지운다. 값이 없으면 '-'로 나온다.
+    # 로그에서 찾은 ID로 audit_log·guardrail_event·core_log를 바로 조회할 수 있다
+    console: "%d{HH:mm:ss.SSS} %-5level [%X{requestUid:--}] %logger{36} - %msg%n"
