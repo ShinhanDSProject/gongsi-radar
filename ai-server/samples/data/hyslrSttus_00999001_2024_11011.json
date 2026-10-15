@@ -1,0 +1,76 @@
+{
+ "status": "000",
+ "message": "정상",
+ "list": [
+  {
+   "rcept_no": "20250318000412",
+   "corp_cls": "K",
+   "corp_code": "00999001",
+   "corp_name": "샘플소재㈜",
+   "nm": "샘플홀딩스㈜",
+   "relate": "최대주주 본인",
+   "stock_knd": "보통주",
+   "bsis_posesn_stock_co": "6,420,000",
+   "bsis_posesn_stock_qota_rt": "32.10",
+   "trmend_posesn_stock_co": "6,420,000",
+   "trmend_posesn_stock_qota_rt": "32.10",
+   "rm": "-"
+  },
+  {
+   "rcept_no": "20250318000412",
+   "corp_cls": "K",
+   "corp_code": "00999001",
+   "corp_name": "샘플소재㈜",
+   "nm": "김샘플",
+   "relate": "최대주주의 대표이사(특수관계인)",
+   "stock_knd": "보통주",
+   "bsis_posesn_stock_co": "840,000",
+   "bsis_posesn_stock_qota_rt": "4.20",
+   "trmend_posesn_stock_co": "840,000",
+   "trmend_posesn_stock_qota_rt": "4.20",
+   "rm": "-"
+  },
+  {
+   "rcept_no": "20250318000412",
+   "corp_cls": "K",
+   "corp_code": "00999001",
+   "corp_name": "샘플소재㈜",
+   "nm": "이가상",
+   "relate": "임원",
+   "stock_knd": "보통주",
+   "bsis_posesn_stock_co": "60,000",
+   "bsis_posesn_stock_qota_rt": "0.30",
+   "trmend_posesn_stock_co": "60,000",
+   "trmend_posesn_stock_qota_rt": "0.30",
+   "rm": "-"
+  },
+  {
+   "rcept_no": "20250318000412",
+   "corp_cls": "K",
+   "corp_code": "00999001",
+   "corp_name": "샘플소재㈜",
+   "nm": "박예시",
+   "relate": "특수관계인",
+   "stock_knd": "보통주",
+   "bsis_posesn_stock_co": "220,000",
+   "bsis_posesn_stock_qota_rt": "1.10",
+   "trmend_posesn_stock_co": "220,000",
+   "trmend_posesn_stock_qota_rt": "1.10",
+   "rm": "-"
+  },
+  {
+   "rcept_no": "20250318000412",
+   "corp_cls": "K",
+   "corp_code": "00999001",
+   "corp_name": "샘플소재㈜",
+   "nm": "계",
+   "relate": "-",
+   "stock_knd": "보통주",
+   "bsis_posesn_stock_co": "7,540,000",
+   "bsis_posesn_stock_qota_rt": "37.70",
+   "trmend_posesn_stock_co": "7,540,000",
+   "trmend_posesn_stock_qota_rt": "37.70",
+   "rm": "-"
+  }
+ ]
+}

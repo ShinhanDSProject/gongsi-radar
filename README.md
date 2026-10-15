@@ -80,42 +80,118 @@ DRAFT ─발행 요청─→ PENDING ─Senior 승인─→ PUBLISHED ─(정정
 | TTM·PER·PBR — 최근 연간 + 당해 누적 − 전년 누적, 지배주주 계정(없으면 대체 계정 표시), 이익 ≤ 0이면 계산 안 함 | `radar/valuation.py` |
 | 시장 화면 — 지수 추이(공식 지수 키가 없으면 '대체 지수'로 표시), 시가총액 추이, KSIC 업종 지도(트리맵·드릴다운), 최근 정기보고서 | `radar/market.py`, `/market` |
 
-## 실행
+## 실행 방법
 
-사전 준비: Docker, Java 21, Node 20+, Python 3.10+ (macOS 기본 `python3`는 3.9라 안 됩니다 — Homebrew 등으로 설치).
+### 1. 준비물
+
+| 도구 | 버전 | 확인 명령 | 비고 |
+|---|---|---|---|
+| Docker | 최근 버전 | `docker info` | MariaDB 컨테이너만 띄운다(앱 서버는 로컬 프로세스) |
+| Java | 21 | `java -version` | 백엔드. Gradle은 `gradlew`가 처음 실행 때 내려받는다 |
+| Node.js | 20 이상 | `node -v` | 프런트 |
+| Python | 3.10 이상(3.12~3.14 확인) | `python3.12 --version` 등 | **macOS 기본 `python3`는 3.9라 안 된다.** `brew install python@3.12`로 설치 |
+| Ollama | 선택 | `ollama list` | 폐쇄망 모드에서만. `ollama pull qwen2.5:7b`, `ollama pull bge-m3` |
+
+아래 명령의 `python3.12`는 설치한 3.10+ 실행 파일로 바꿔 쓴다(예: `python3.14`, `/opt/homebrew/opt/python@3.14/bin/python3.14`).
+
+### 2. 처음 한 번 — 설치
+
+저장소 루트에서 차례로 실행한다.
 
 ```bash
-scripts/db.sh up                                   # MariaDB 컨테이너(3307) + 스키마·시드 적용
+git clone git@github.com:ShinhanDSProject/gongsi-radar.git
+cd gongsi-radar
 
-# 최초 1회: 각 서버 의존성
-(cd core-service && python3.14 -m venv .venv && .venv/bin/pip install -r requirements.txt && cp .env.example .env)
-(cd ai-server && python3.14 -m venv .venv && .venv/bin/pip install -r requirements.txt && cp .env.example .env)
+# DB: MariaDB 컨테이너(gongsi-mariadb, 포트 3307) 기동 + 스키마·계정·시드 적용
+scripts/db.sh up
+
+# Core Zone(발행 원장)
+(cd core-service && python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt && cp .env.example .env)
+
+# AI 서버(+ radar 라이브러리)
+(cd ai-server && python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt && cp .env.example .env)
+
+# 프런트
 (cd frontend && npm install)
 
-scripts/dev.sh start                               # core → ai → backend → frontend 순서로 기동, 로그는 .tmp/logs/
-open http://localhost:3100                          # analyst_001(Junior) · senior_001(Senior), 비밀번호 password
-scripts/dev.sh stop
+# 백엔드는 설치가 따로 없다(처음 기동할 때 gradlew가 Gradle·의존성을 내려받아 1~3분 걸린다)
 ```
 
-시연 흐름: `analyst_001`로 로그인 → 새 분석(999001, 2025, 사업보고서, "시연용 오류 주입" 체크) → 에이전트 타임라인에서
-반려·재연결 확인 → 리포트 검토·문구 수정 → 발행 요청 → `senior_001`로 로그인 → 결재함에서 승인 → 발행 원장·감사 추적 확인.
+`.env`는 커밋하지 않는다. 기본값만으로 샘플 데이터·mock LLM 모드가 바로 돈다(외부 키 불필요).
 
-### 폐쇄망 모드
+### 3. 기동과 종료
 
-`ai-server/.env`에서 `LLM_PROVIDER=ollama`, `EMBEDDING_PROVIDER=ollama`, `ALLOW_EXTERNAL_LLM=false`.
-외부 provider는 목록에 `blocked`로 남고 고를 수 없습니다(전환 API 403). 관리 화면에서 런타임 전환도 됩니다(재기동하면 `.env` 값).
+```bash
+scripts/dev.sh start     # core(9100) → ai(8100) → backend(8180) → frontend(3100) 순서로 띄운다
+scripts/dev.sh status    # 포트별 기동 여부
+scripts/dev.sh stop      # 전부 내린다(gradle이 띄운 JVM까지)
+scripts/db.sh down       # MariaDB 컨테이너 정지(데이터는 남는다. 다음엔 scripts/db.sh up)
+```
 
-### 실데이터
+- 브라우저: **http://localhost:3100**
+- 로그는 `.tmp/logs/{core-service,ai-server,backend,frontend}.log`. 이미 떠 있는 포트는 건너뛴다.
+- 서버를 하나씩 띄우고 싶으면(같은 순서로 터미널 4개):
 
-`RADAR_SOURCE=opendart OPENDART_API_KEY=…`(OpenDART), 시세는 `DATA_GO_KR_API_KEY`(공공데이터포털 금융위원회_주식시세정보).
-응답은 `ai-server/.cache/`에 캐시합니다. 12월 결산 법인만 지원하고, 은행·보험·증권은 손익 구조가 달라 결과를 신뢰하기 어렵습니다.
+  ```bash
+  cd core-service && .venv/bin/uvicorn app.main:app --port 9100
+  cd ai-server    && .venv/bin/uvicorn app.main:app --port 8100
+  cd backend      && ./gradlew bootRun
+  cd frontend     && npm run dev
+  ```
 
-### 도메인 라이브러리만 쓰기
+### 4. 로그인과 시연 흐름
+
+| 계정 | 비밀번호 | 역할 | 볼 수 있는 메뉴 |
+|---|---|---|---|
+| `analyst_001`, `analyst_002` | `password` | Junior 애널리스트 | 분석 · 기업 · 시장 · 발행 원장 |
+| `senior_001` | `password` | Senior 매니저 | 위 + 결재함 · 관리 |
+
+1. `analyst_001`로 로그인 → **분석** → 새 분석: 회사 `999001`, 2025, 사업보고서, "시연용 오류 주입" 체크 → 분석 시작
+2. 에이전트 타임라인에서 Risk Reviewer가 영업이익 문장을 **반려 → 재연결 → 통과**하는 것을 본다(1~2초, mock LLM)
+3. 리포트 탭(변경 문단·수치·사업 지표·지배구조·시장 지표)을 검토하고 요약 문구를 고친다 — "저평가" 같은 표현은 저장이 막힌다
+4. **발행 요청** → 이후 수정은 잠긴다
+5. `senior_001`로 로그인 → **결재함**에서 승인 → 결재란에 도장, **발행 원장**에 PUBLISHED(v1). 자기가 요청한 건은 승인할 수 없다
+6. **관리** → 감사 로그에서 요청 UID로 추적, Kill Switch를 켜면 새 분석이 막힌다
+7. **기업**·**시장** 메뉴에서 기업 목록·업종 지도·시가총액 추이를 본다(샘플 46개사, 모두 가상)
+
+같은 회사·기간을 다시 승인하면 정정 발행(v2)으로 처리되고 v1은 SUPERSEDED가 된다.
+
+### 5. 설정 바꾸기 (`ai-server/.env`)
+
+| 하고 싶은 것 | 설정 | 비고 |
+|---|---|---|
+| OpenAI로 서술 생성 | `LLM_PROVIDER=openai`, `OPENAI_API_KEY=…` | 관리 화면에서 런타임 전환도 된다(재기동하면 `.env` 값) |
+| 폐쇄망 모드 | `LLM_PROVIDER=ollama`, `EMBEDDING_PROVIDER=ollama`, `ALLOW_EXTERNAL_LLM=false` | `ollama serve` 필요. 외부 provider는 목록에 `blocked`로 남는다. 분석 1건 약 7분 |
+| 실제 공시(OpenDART) | `RADAR_SOURCE=opendart`, `OPENDART_API_KEY=…` | https://opendart.fss.or.kr 에서 무료 발급. 응답은 `ai-server/.cache/`에 캐시 |
+| 실제 시세·지수 | `DATA_GO_KR_API_KEY=…`(디코딩 키) | 공공데이터포털 금융위원회_주식시세정보·지수시세정보. 없으면 PER·PBR은 "계산 안 함", 지수는 '대체 지수' |
+
+실데이터 경로(OpenDART·공공데이터포털)는 응답 문서에 맞춰 구현했지만 실키로는 아직 검증하지 않았다. 12월 결산 법인만 지원하고,
+은행·보험·증권은 손익 구조가 달라 결과를 신뢰하기 어렵다. 키는 `.env`에만 두고 커밋하지 않는다.
+
+백엔드 설정은 `backend/src/main/resources/application.yaml` 기본값을 쓰고 환경변수로 덮어쓴다
+(`MARIADB_USER`, `AI_SERVER_API_KEY`, `CORE_SYSTEM_KEY`, `JWT_SECRET` 등). 운영에서는 개발용 기본 키를 반드시 바꾼다.
+
+### 6. 문제가 생기면
+
+| 증상 | 원인·해결 |
+|---|---|
+| `TypeError: unsupported operand type(s) for \|` 등 문법 오류 | Python 3.9로 venv를 만들었다. `.venv`를 지우고 3.10+로 다시 만든다 |
+| `dev.sh start`에서 포트가 뜨지 않음 | `.tmp/logs/<서버>.log`를 본다. 다른 프로그램이 3100·8100·8180·9100을 쓰고 있으면 `lsof -nP -iTCP:<포트> -sTCP:LISTEN` |
+| 백엔드가 `Schema-validation` 오류로 죽음 | DB 스키마가 적용되지 않았다. `scripts/db.sh apply` |
+| 로그인은 되는데 분석 실행이 503 `AI_SERVER_UNAVAILABLE` | AI 서버가 꺼져 있다(`scripts/dev.sh status`) |
+| 분석이 `KILL_SWITCH_ACTIVE` | 관리 화면에서 Kill Switch가 켜져 있다 |
+| 발행 요청이 409 | Core가 거절한 사유가 화면에 나온다(같은 리포트의 대기 건, 하루 한도 등) |
+| MariaDB를 처음부터 다시 | `docker rm -f gongsi-mariadb && scripts/db.sh up` (감사 로그 등 모든 데이터가 지워진다) |
+
+### 7. 도메인 라이브러리만 쓰기
+
+서버 없이 `radar` 라이브러리만 돌릴 수 있다.
 
 ```bash
 cd ai-server
-.venv/bin/python -m radar demo --fault         # 샘플 분석 → out/report.json
+.venv/bin/python -m radar demo --fault           # 샘플 분석 → out/report.json
 .venv/bin/python -m radar companies 샘플          # 기업 검색
+.venv/bin/python -m radar company 999001          # 기업 상세 요약
 .venv/bin/python -m radar parse 원문.zip --blocks  # DART 원문 파싱 통계
 ```
 
