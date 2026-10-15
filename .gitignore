@@ -3,3 +3,4 @@ __pycache__/
 .cache/
 out/
 web/node_modules/
+.venv/
