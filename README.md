@@ -9,7 +9,12 @@ DART 정기보고서 두 건(전년 같은 보고서와 당기 보고서)을 비
 
 ## 빠른 시작
 
+**Python 3.10 이상**이 필요합니다(`str | None` 같은 타입 문법을 씀). macOS 기본 `python3`는 3.9라서 실행되지 않으니,
+Homebrew 등으로 설치한 3.10+ 버전으로 가상환경을 만드세요.
+
 ```bash
+python3.12 -m venv .venv            # 3.10 이상이면 어느 버전이든 됨
+source .venv/bin/activate
 pip install -r requirements.txt
 python -m radar demo --fault        # 샘플 분석 → out/report.json, out/report.html (브라우저로 바로 열림)
 python -m radar serve --port 8000   # API + 리뷰 화면 → http://127.0.0.1:8000/
