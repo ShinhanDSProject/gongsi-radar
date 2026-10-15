@@ -126,6 +126,12 @@ def get_valuation(company: str) -> Dict[str, Any]:
     return compute_valuation(src, src.resolve(str(company)))
 
 
+def get_market_overview(market: str = "ALL") -> Dict[str, Any]:
+    """시장 화면: 지수 추이·시가총액 추이·업종 지도(KSIC)·최근 정기보고서(docs/CONTRACT.md §9)."""
+    from radar.market import market_overview
+    return market_overview(_source(), market)
+
+
 def get_stock_price(stock_code: str, days: int = 5) -> List[Dict[str, Any]]:
     src = _source()
     comp = src.resolve(str(stock_code))

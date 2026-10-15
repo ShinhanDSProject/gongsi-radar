@@ -3,180 +3,368 @@
   "corp_code": "00999001",
   "corp_name": "샘플소재㈜",
   "stock_code": "999001",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "20129",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888001",
   "corp_name": "피어기업01(가상)",
   "stock_code": "888001",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "28202",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888002",
   "corp_name": "피어기업02(가상)",
   "stock_code": "888002",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "26299",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888003",
   "corp_name": "피어기업03(가상)",
   "stock_code": "888003",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "20129",
+  "market": "KOSPI"
  },
  {
   "corp_code": "00888004",
   "corp_name": "피어기업04(가상)",
   "stock_code": "888004",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "28202",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888005",
   "corp_name": "피어기업05(가상)",
   "stock_code": "888005",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "26299",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888006",
   "corp_name": "피어기업06(가상)",
   "stock_code": "888006",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "20129",
+  "market": "KOSPI"
  },
  {
   "corp_code": "00888007",
   "corp_name": "피어기업07(가상)",
   "stock_code": "888007",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "28202",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888008",
   "corp_name": "피어기업08(가상)",
   "stock_code": "888008",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "26299",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888009",
   "corp_name": "피어기업09(가상)",
   "stock_code": "888009",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "20129",
+  "market": "KOSPI"
  },
  {
   "corp_code": "00888010",
   "corp_name": "피어기업10(가상)",
   "stock_code": "888010",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "28202",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888011",
   "corp_name": "피어기업11(가상)",
   "stock_code": "888011",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "26299",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888012",
   "corp_name": "피어기업12(가상)",
   "stock_code": "888012",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "20129",
+  "market": "KOSPI"
  },
  {
   "corp_code": "00888013",
   "corp_name": "피어기업13(가상)",
   "stock_code": "888013",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "28202",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888014",
   "corp_name": "피어기업14(가상)",
   "stock_code": "888014",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "26299",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888015",
   "corp_name": "피어기업15(가상)",
   "stock_code": "888015",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "20129",
+  "market": "KOSPI"
  },
  {
   "corp_code": "00888016",
   "corp_name": "피어기업16(가상)",
   "stock_code": "888016",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "28202",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888017",
   "corp_name": "피어기업17(가상)",
   "stock_code": "888017",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "26299",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888018",
   "corp_name": "피어기업18(가상)",
   "stock_code": "888018",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "20129",
+  "market": "KOSPI"
  },
  {
   "corp_code": "00888019",
   "corp_name": "피어기업19(가상)",
   "stock_code": "888019",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "28202",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888020",
   "corp_name": "피어기업20(가상)",
   "stock_code": "888020",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "26299",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888021",
   "corp_name": "피어기업21(가상)",
   "stock_code": "888021",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "20129",
+  "market": "KOSPI"
  },
  {
   "corp_code": "00888022",
   "corp_name": "피어기업22(가상)",
   "stock_code": "888022",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "28202",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888023",
   "corp_name": "피어기업23(가상)",
   "stock_code": "888023",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "26299",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888024",
   "corp_name": "피어기업24(가상)",
   "stock_code": "888024",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "20129",
+  "market": "KOSPI"
  },
  {
   "corp_code": "00888025",
   "corp_name": "피어기업25(가상)",
   "stock_code": "888025",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "28202",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888026",
   "corp_name": "피어기업26(가상)",
   "stock_code": "888026",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "26299",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888027",
   "corp_name": "피어기업27(가상)",
   "stock_code": "888027",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "20129",
+  "market": "KOSPI"
  },
  {
   "corp_code": "00888028",
   "corp_name": "피어기업28(가상)",
   "stock_code": "888028",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "28202",
+  "market": "KOSDAQ"
  },
  {
   "corp_code": "00888029",
   "corp_name": "피어기업29(가상)",
   "stock_code": "888029",
-  "induty": "2차전지 소재"
+  "induty": "2차전지 소재",
+  "induty_code": "26299",
+  "market": "KOSDAQ"
+ },
+ {
+  "corp_code": "00777001",
+  "corp_name": "가상은행㈜",
+  "stock_code": "777001",
+  "induty": null,
+  "induty_code": "64191",
+  "market": "KOSPI"
+ },
+ {
+  "corp_code": "00777002",
+  "corp_name": "가상증권㈜",
+  "stock_code": "777002",
+  "induty": null,
+  "induty_code": "66121",
+  "market": "KOSPI"
+ },
+ {
+  "corp_code": "00777003",
+  "corp_name": "가상손해보험㈜",
+  "stock_code": "777003",
+  "induty": null,
+  "induty_code": "65121",
+  "market": "KOSPI"
+ },
+ {
+  "corp_code": "00777004",
+  "corp_name": "가상텔레콤㈜",
+  "stock_code": "777004",
+  "induty": null,
+  "induty_code": "61220",
+  "market": "KOSPI"
+ },
+ {
+  "corp_code": "00777005",
+  "corp_name": "가상소프트㈜",
+  "stock_code": "777005",
+  "induty": null,
+  "induty_code": "58222",
+  "market": "KOSDAQ"
+ },
+ {
+  "corp_code": "00777006",
+  "corp_name": "가상게임즈㈜",
+  "stock_code": "777006",
+  "induty": null,
+  "induty_code": "58211",
+  "market": "KOSDAQ"
+ },
+ {
+  "corp_code": "00777007",
+  "corp_name": "가상유통㈜",
+  "stock_code": "777007",
+  "induty": null,
+  "induty_code": "47111",
+  "market": "KOSPI"
+ },
+ {
+  "corp_code": "00777008",
+  "corp_name": "가상건설㈜",
+  "stock_code": "777008",
+  "induty": null,
+  "induty_code": "41221",
+  "market": "KOSPI"
+ },
+ {
+  "corp_code": "00777009",
+  "corp_name": "가상해운㈜",
+  "stock_code": "777009",
+  "induty": null,
+  "induty_code": "50112",
+  "market": "KOSPI"
+ },
+ {
+  "corp_code": "00777010",
+  "corp_name": "가상항공㈜",
+  "stock_code": "777010",
+  "induty": null,
+  "induty_code": "51100",
+  "market": "KOSPI"
+ },
+ {
+  "corp_code": "00777011",
+  "corp_name": "가상에너지㈜",
+  "stock_code": "777011",
+  "induty": null,
+  "induty_code": "35200",
+  "market": "KOSPI"
+ },
+ {
+  "corp_code": "00777012",
+  "corp_name": "가상바이오리서치㈜",
+  "stock_code": "777012",
+  "induty": null,
+  "induty_code": "70113",
+  "market": "KOSDAQ"
+ },
+ {
+  "corp_code": "00777013",
+  "corp_name": "가상자동차㈜",
+  "stock_code": "777013",
+  "induty": null,
+  "induty_code": "30121",
+  "market": "KOSPI"
+ },
+ {
+  "corp_code": "00777014",
+  "corp_name": "가상반도체㈜",
+  "stock_code": "777014",
+  "induty": null,
+  "induty_code": "26110",
+  "market": "KOSPI"
+ },
+ {
+  "corp_code": "00777015",
+  "corp_name": "가상제약㈜",
+  "stock_code": "777015",
+  "induty": null,
+  "induty_code": "21210",
+  "market": "KOSDAQ"
+ },
+ {
+  "corp_code": "00777016",
+  "corp_name": "가상신소재㈜",
+  "stock_code": "777016",
+  "induty": null,
+  "induty_code": "22299",
+  "market": "KONEX"
  }
 ]

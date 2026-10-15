@@ -28,6 +28,24 @@ def _match(c: dict, q: str) -> bool:
             or c.get("corp_code") == q)
 
 
+def _latest_cap(source, c: dict) -> tuple[int | None, str | None]:
+    """최신 거래일의 시가총액(원)과 그 날짜. 시세가 없으면 (None, None)."""
+    if not c.get("stock_code"):
+        return None, None
+    try:
+        rows = source.market(c["stock_code"]) or []
+    except SourceError:
+        return None, None
+    if not rows:
+        return None, None
+    last = max(rows, key=lambda r: r.get("basDt", ""))
+    cap = amount(last.get("mrktTotAmt"))
+    if cap is None and amount(last.get("clpr")) and amount(last.get("lstgStCnt")):
+        cap = amount(last["clpr"]) * amount(last["lstgStCnt"])
+    d = last.get("basDt", "")
+    return cap, (f"{d[:4]}-{d[4:6]}-{d[6:]}" if len(d) == 8 else None)
+
+
 def _row(c: dict) -> dict:
     return {"corpCode": c["corp_code"], "corpName": c["corp_name"], "stockCode": c.get("stock_code") or "",
             "induty": c.get("induty"), "hasFilings": False, "revenue": None, "opIncome": None, "opMarginPct": None,
@@ -44,7 +62,10 @@ def company_row(source, c: dict, as_of=None) -> dict:
     vi = gather_valuation_inputs(source, c, as_of)
     a = vi["annual"]
     if not a:
-        row["basis"] = "재무 데이터 없음"
+        # 재무가 없어도 시가총액은 시세에서 나온다(PER·PBR은 분모가 없어 비운다)
+        cap, day = _latest_cap(source, c)
+        row["marketCap"] = cap
+        row["basis"] = "재무 데이터 없음" + (f" · 시가총액 시세 {day}" if cap else "")
         return row
     rv, op = (find_row(a["rows"], k) for k in ("rev", "op"))
     row["revenue"] = amount(rv.get("thstrm_amount")) if rv else None

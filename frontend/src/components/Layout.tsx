@@ -25,6 +25,7 @@ export default function Layout() {
           <nav className="nav order-3 basis-full sm:order-none sm:basis-auto" aria-label="주 메뉴">
             <NavLink to="/analyses" className={linkClass}>분석</NavLink>
             <NavLink to="/companies" className={linkClass}>기업</NavLink>
+            <NavLink to="/market" className={linkClass}>시장</NavLink>
             <NavLink to="/publications" className={linkClass}>발행 원장</NavLink>
             {/* Senior에게만 보이는 메뉴 — 숨김이지 방어가 아니다. 방어는 서버 몫 */}
             {isSenior && <NavLink to="/approvals" className={linkClass}>결재함</NavLink>}

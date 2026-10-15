@@ -134,7 +134,8 @@ class SampleSource:
     def companies(self) -> list[dict]:
         corps = json.loads((self.dir / "corp_codes.json").read_text(encoding="utf-8"))
         return [{"corp_code": c["corp_code"], "corp_name": c["corp_name"], "stock_code": c.get("stock_code", ""),
-                 "induty": c.get("induty")} for c in corps if c.get("stock_code")]
+                 "induty": c.get("induty"), "induty_code": c.get("induty_code"), "market": c.get("market")}
+                for c in corps if c.get("stock_code")]
 
     def filings(self, corp_code: str) -> list[dict]:
         out = []
@@ -159,6 +160,26 @@ class SampleSource:
             return []
         self.calls += 1
         return DataGoKrMarket.items(json.loads(p.read_text(encoding="utf-8")))
+
+    # ---- 시장 화면 -----------------------------------------------------------------------
+    def market_history(self) -> dict[str, list[dict]]:
+        """종목코드 → 일별 시세(getStockPriceInfo 행). 샘플은 회사별 파일을 모두 읽는다."""
+        return {c["stock_code"]: rows for c in self.companies() if (rows := self.market(c["stock_code"]))}
+
+    def index_series(self, name: str) -> list[dict]:
+        """공식 지수(코스피·코스닥) 일별 종가. 샘플에는 없다 → 시장 화면이 대체 지수를 만든다."""
+        return []
+
+    def recent_filings(self, days: int = 90) -> list[dict]:
+        out = []
+        for r in self._json("list.json")["list"]:
+            row = _filing_row(r, (self.dir / "filings" / f"{r['rcept_no']}.zip").exists())
+            if row:
+                out.append({**r, **row})
+        return sorted(out, key=lambda x: (x["rcept_dt"], x["rcept_no"]), reverse=True)
+
+    def induty_code(self, corp_code: str) -> str | None:
+        return next((c.get("induty_code") for c in self.companies() if c["corp_code"] == corp_code), None)
 
 
 class OpenDartSource:
@@ -305,6 +326,49 @@ class OpenDartSource:
     def market(self, stock_code: str) -> list[dict]:
         return DataGoKrMarket(os.getenv("DATA_GO_KR_API_KEY"), self.cache.parent, self.http).prices(stock_code)
 
+    # ---- 시장 화면(실키로 검증하지 않음) -----------------------------------------------------
+    def market_history(self) -> dict[str, list[dict]]:
+        """전 종목 시세를 날짜별로 받아 종목코드 → 행 목록으로 바꾼다.
+
+        종목별로 부르면 2,500번이 넘는다. getStockPriceInfo는 basDt 하나로 전 종목을 돌려주므로 날짜별로 부르고,
+        지난 날짜는 바뀌지 않으니 영구 캐시한다. 1년을 매일 받으면 첫 계산에 250번이라, 최근 한 달은 매일·그 이전은 주 1회만 받는다.
+        """
+        mk = DataGoKrMarket(os.getenv("DATA_GO_KR_API_KEY"), self.cache.parent, self.http)
+        if not mk.key:
+            return {}
+        today = date.today()
+        wanted = []
+        for back in range(0, 372):
+            d = date.fromordinal(today.toordinal() - back)
+            if d.weekday() < 5 and (back <= 35 or d.weekday() == 4):     # 최근 5주는 매일, 그 이전은 금요일
+                wanted.append(d.strftime("%Y%m%d"))
+        out: dict[str, list[dict]] = {}
+        for bas in wanted:
+            for it in mk.by_date(bas):
+                out.setdefault(it.get("srtnCd", ""), []).append(it)
+        return out
+
+    def index_series(self, name: str) -> list[dict]:
+        return DataGoKrIndex(os.getenv("DATA_GO_KR_API_KEY"), self.cache.parent, self.http).series(name)
+
+    def recent_filings(self, days: int = 30) -> list[dict]:
+        """최근 정기공시(사업·반기·분기). corp_code 없이 부르면 기간이 3개월 이내여야 한다."""
+        today = date.today()
+        bgn = date.fromordinal(today.toordinal() - min(days, 89)).strftime("%Y%m%d")
+        end = today.strftime("%Y%m%d")
+        d = self._cached_json(f"recent_A_{bgn}_{end}", "list.json",
+                              {"bgn_de": bgn, "end_de": end, "pblntf_ty": "A", "page_count": 100})
+        out = [{**r, **row} for r in d.get("list", []) if (row := _filing_row(r, True))]
+        return sorted(out, key=lambda x: (x["rcept_dt"], x["rcept_no"]), reverse=True)
+
+    def induty_code(self, corp_code: str) -> str | None:
+        """기업개황(company.json)의 업종 코드(KSIC). 회사마다 한 번 부르고 캐시한다."""
+        try:
+            d = self._cached_json(f"company_{corp_code}", "company.json", {"corp_code": corp_code})
+        except SourceError:
+            return None
+        return (d.get("induty_code") or None) if d.get("status") == "000" else None
+
 
 class DataGoKrMarket:
     """공공데이터포털 금융위원회_주식시세정보(getStockPriceInfo). 영업일 다음 날 오후에 전일 시세가 올라온다.
@@ -347,10 +411,60 @@ class DataGoKrMarket:
         p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
         return self._only(d, stock_code)
 
+    def by_date(self, bas_dt: str) -> list[dict]:
+        """그 날짜의 전 종목 시세. 휴장일이면 빈 목록. 지난 날짜는 바뀌지 않아 영구 캐시한다."""
+        p = self.cache / f"all_{bas_dt}.json"
+        if p.exists():
+            return self.items(json.loads(p.read_text(encoding="utf-8")))
+        params = {"serviceKey": self.key, "resultType": "json", "numOfRows": 5000, "pageNo": 1, "basDt": bas_dt}
+        try:
+            r = self.http.get(self.URL, params=params, timeout=60)
+            r.raise_for_status()
+            d = r.json()
+        except (requests.RequestException, ValueError) as e:
+            raise SourceError(f"공공데이터포털 시세 호출 실패: {e}") from e
+        if ((d.get("response") or {}).get("header") or {}).get("resultCode") != "00":
+            raise SourceError("공공데이터포털 시세 오류")
+        if bas_dt < date.today().strftime("%Y%m%d"):
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(json.dumps(d, ensure_ascii=False), encoding="utf-8")
+        return self.items(d)
+
     @classmethod
     def _only(cls, d: dict, stock_code: str) -> list[dict]:
         # likeSrtnCd는 부분 일치라 정확히 같은 종목만 남긴다
         return sorted([i for i in cls.items(d) if i.get("srtnCd") == stock_code], key=lambda i: i["basDt"], reverse=True)
+
+
+class DataGoKrIndex:
+    """공공데이터포털 금융위원회_지수시세정보(getStockMarketIndex). idxNm=코스피·코스닥, 최대 5년치. 실키로 검증하지 않음."""
+    URL = "https://apis.data.go.kr/1160100/service/GetMarketIndexInfoService/getStockMarketIndex"
+
+    def __init__(self, api_key: str | None, cache_dir: Path, session=None):
+        self.key = api_key
+        self.cache = Path(cache_dir) / "datagokr"
+        self.http = session or requests.Session()
+
+    def series(self, name: str, years: int = 5) -> list[dict]:
+        if not self.key:
+            return []
+        today = date.today()
+        p = self.cache / f"index_{name}_{today:%Y%m%d}.json"
+        if p.exists():
+            return json.loads(p.read_text(encoding="utf-8"))
+        begin = date(today.year - years, today.month, min(today.day, 28)).strftime("%Y%m%d")
+        params = {"serviceKey": self.key, "resultType": "json", "numOfRows": 2000, "pageNo": 1, "idxNm": name,
+                  "beginBasDt": begin}
+        try:
+            r = self.http.get(self.URL, params=params, timeout=60)
+            r.raise_for_status()
+            d = r.json()
+        except (requests.RequestException, ValueError) as e:
+            raise SourceError(f"공공데이터포털 지수 호출 실패: {e}") from e
+        rows = [i for i in DataGoKrMarket.items(d) if i.get("idxNm") == name]
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
+        return rows
 
 
 def make_source(settings):

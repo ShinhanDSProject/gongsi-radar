@@ -78,6 +78,7 @@ DRAFT ─발행 요청─→ PENDING ─Senior 승인─→ PUBLISHED ─(정정
 | 기업 목록·검색·상세 — 매출·영업이익률·시가총액·PER·PBR, 재무·시장·지배구조·공시 목록 | `radar/company.py`, `/companies` |
 | 지배구조·관계망 — 최대주주·임원·타법인출자 변동과 관계 그래프(목록에 있는 회사는 링크) | `radar/governance.py` |
 | TTM·PER·PBR — 최근 연간 + 당해 누적 − 전년 누적, 지배주주 계정(없으면 대체 계정 표시), 이익 ≤ 0이면 계산 안 함 | `radar/valuation.py` |
+| 시장 화면 — 지수 추이(공식 지수 키가 없으면 '대체 지수'로 표시), 시가총액 추이, KSIC 업종 지도(트리맵·드릴다운), 최근 정기보고서 | `radar/market.py`, `/market` |
 
 ## 실행
 

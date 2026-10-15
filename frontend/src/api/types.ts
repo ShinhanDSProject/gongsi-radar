@@ -573,3 +573,79 @@ export interface CompanyProfile {
   governance: Governance | null;
   notes: string[];
 }
+
+// ---- 시장 화면 (§9) ----
+// 시장 필터는 시가총액 추이·업종 지도·최근 정기보고서에 적용된다. 지수 추이는 필터와 무관하다.
+export type MarketCode = "ALL" | "KOSPI" | "KOSDAQ" | "KONEX";
+export type MarketRange = "1Y" | "3Y" | "5Y";
+export interface SeriesPoint {
+  d: string; // YYYY-MM-DD
+  v: number;
+}
+// 지수 delta는 포인트, 시가총액 delta는 원. 데이터가 모자라면 pct: null + reason
+export interface PeriodChange {
+  period: "1D" | "1W" | "1M" | "1Y";
+  label: "전일" | "1주" | "1개월" | "1년";
+  pct: number | null;
+  delta: number | null;
+  from: string | null;
+  to: string | null;
+  reason?: string;
+}
+export interface SectorNode {
+  id: string;
+  name: string;
+  level: "root" | "section" | "division" | "company";
+  code: string | null; // KSIC 대분류 문자(C) · 중분류 2자리(20) · 회사는 종목코드
+  value: number; // 시가총액(원)
+  count: number; // 기업 수
+  share: number; // 부모 대비 비중 %
+  corpCode?: string;
+  children?: SectorNode[];
+}
+export interface MarketIndex {
+  code: "KOSPI" | "KOSDAQ";
+  name: string;
+  // proxy: 공식 지수 키가 없어 추적 기업 시가총액으로 만든 대체 지수 — 공식 지수처럼 보이면 안 된다
+  kind: "official" | "proxy";
+  last: number | null;
+  asOf: string | null;
+  series: SeriesPoint[];
+  changes: PeriodChange[];
+  availableRanges: MarketRange[];
+  note: string;
+  source: Source;
+}
+export interface MarketFiling {
+  rceptNo: string;
+  rceptDt: string;
+  corpCode: string;
+  corpName: string;
+  stockCode: string;
+  reportNm: string;
+  reprtCode: string | null;
+  bsnsYear: number | null;
+  marketCap: number | null;
+  isCorrection: boolean;
+  hasDocument: boolean;
+  url: string;
+}
+export interface MarketOverview {
+  asOf: string | null;
+  market: MarketCode;
+  markets: { code: MarketCode; label: string; count: number }[];
+  universeNote: string;
+  sample: boolean;
+  capitalization: {
+    total: number | null;
+    series: SeriesPoint[];
+    changes: PeriodChange[];
+    availableRanges: MarketRange[];
+    rangeNote: string | null;
+    source: Source;
+  };
+  indices: MarketIndex[];
+  sectors: SectorNode;
+  recentFilings: MarketFiling[];
+  notes: string[];
+}

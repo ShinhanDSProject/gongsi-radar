@@ -23,6 +23,7 @@ TOOLS = [
     ("get_lawsuits", dt.get_lawsuits, ["DISCLOSURE_READ"], "주요사항보고서(소송 등 제기)"),
     ("get_valuation", dt.get_valuation, ["MARKET_DATA_READ"], "TTM·PER·PBR(계산식·출처 포함)"),
     ("get_stock_price", dt.get_stock_price, ["MARKET_DATA_READ"], "최근 N영업일 종가·시가총액"),
+    ("get_market_overview", dt.get_market_overview, ["MARKET_DATA_READ"], "시장 화면(지수·시가총액 추이·업종 지도·최근 공시)"),
     ("search_disclosures", dt.search_disclosures, ["RAG_READ"], "공시 원문 문단 검색(RAG)"),
     ("check_compliance_rules", cp.check_compliance_rules, ["REPORT_READ"], "리포트 초안의 규정 위반 후보 검사"),
     ("get_publication_history", dt.get_publication_history, ["PUBLICATION_READ"], "발행 원장 이력 조회(Core Zone)"),

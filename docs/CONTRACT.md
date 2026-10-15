@@ -283,3 +283,48 @@ version INT, supersedes_id NULL, submitted_by, status, decided_by, decided_at, c
 5. `backend/`: `./gradlew bootRun` (8180)
 6. `frontend/`: `npm run dev` → http://localhost:3100
 `scripts/dev.sh`가 3~6을 백그라운드로 띄우고 로그를 `.tmp/logs/`에 남긴다.
+
+## 9. 시장 화면 (알파인더 `/market` 참고)
+
+- Spring: `GET /api/market?market=ALL|KOSPI|KOSDAQ|KONEX` (`MARKET_DATA_READ`) → `MarketOverview` (FastAPI 프록시)
+- FastAPI: `GET /ai/market?market=` → Tool Gateway `get_market_overview`(MARKET_DATA_READ)
+- 시장 필터는 시가총액 추이·업종 지도·최근 정기보고서에 적용된다. 지수 추이는 필터와 무관하다.
+
+```ts
+MarketOverview = {
+  asOf: string | null,                         // 최신 시세 기준일 YYYY-MM-DD
+  market: "ALL" | "KOSPI" | "KOSDAQ" | "KONEX",
+  markets: { code: "ALL"|"KOSPI"|"KOSDAQ"|"KONEX", label: string, count: number }[],   // 필터 칩(전체 포함)
+  universeNote: string,                        // 예: "추적 기업 44개사(가상 샘플)"
+  sample: boolean,
+  capitalization: {
+    total: number | null,                      // 원
+    series: { d: string, v: number }[],        // 일별 합계(원), 오래된 날짜 → 최신
+    changes: PeriodChange[],                   // 전일·1주·1개월·1년
+    availableRanges: ("1Y"|"3Y"|"5Y")[],       // 데이터가 있는 기간만. 나머지 버튼은 비활성 + 사유
+    rangeNote: string | null,                  // 예: "샘플 시세는 1년치입니다"
+    source: Source
+  },
+  indices: {
+    code: "KOSPI" | "KOSDAQ", name: string,
+    kind: "official" | "proxy",                // proxy: 공식 지수 키가 없어 추적 기업 시가총액으로 만든 대체 지수
+    last: number | null, asOf: string | null,
+    series: { d: string, v: number }[], changes: PeriodChange[],
+    availableRanges: ("1Y"|"3Y"|"5Y")[], note: string, source: Source
+  }[],
+  sectors: SectorNode,                         // 트리맵 루트
+  recentFilings: { rceptNo, rceptDt, corpCode, corpName, stockCode, reportNm, reprtCode: string|null,
+                   bsnsYear: number|null, marketCap: number|null, isCorrection: boolean,
+                   hasDocument: boolean, url: string }[],      // 접수일 내림차순, 최대 30건
+  notes: string[]
+}
+PeriodChange = { period: "1D"|"1W"|"1M"|"1Y", label: "전일"|"1주"|"1개월"|"1년",
+                 pct: number | null, delta: number | null, from: string | null, to: string | null, reason?: string }
+SectorNode = { id: string, name: string, level: "root"|"section"|"division"|"company",
+               code: string | null,                // KSIC 대분류 문자(C) · 중분류 2자리(20) · 회사는 종목코드
+               value: number, count: number,       // value = 시가총액(원), count = 기업 수
+               share: number,                      // 부모 대비 비중 %
+               corpCode?: string, children?: SectorNode[] }
+```
+- 지수 `delta`는 포인트, 시가총액 `delta`는 원. 기간 기준일은 `to`(최신)에서 거꾸로 7일·1개월·1년 이내 마지막 거래일이며, 그만큼 데이터가 없으면 `pct: null` + `reason`.
+- 트리맵 면적 = 시가총액, 색은 등락률을 나타내지 않는다(대분류 구분색). 업종은 KSIC(한국표준산업분류) 대분류 → 중분류 → 기업.

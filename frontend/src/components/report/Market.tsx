@@ -3,6 +3,7 @@
 import type { Valuation } from "../../api/types";
 import { dartUrl, fmtKRW, fmtNum, fmtYmd, REPRT_LABEL } from "../../lib/format";
 import { FormulaCard } from "../FormulaView";
+import LineChart from "../LineChart";
 import { Empty } from "../ui";
 
 const MARKET_SOURCE: Record<string, string> = {
@@ -108,42 +109,16 @@ export function MarketView({ valuation, note }: { valuation: Valuation | null | 
   );
 }
 
-// 종가 선 그래프. 축은 시작·끝 날짜와 최고·최저가만 적는다(값 판단 없이 모양만)
+// 종가 선 그래프. 공용 LineChart로 그린다(축 눈금·십자선·키보드 탐색). 값 판단 없이 모양만
 export function PriceSparkline({ prices }: { prices: { d: string; c: number }[] }) {
-  if (prices.length < 2) return <p className="hint">시세 이력이 없습니다.</p>;
-  const W = 640;
-  const H = 180;
-  const padL = 64;
-  const padR = 12;
-  const padT = 12;
-  const padB = 28;
-  const cs = prices.map((p) => p.c);
-  const lo = Math.min(...cs);
-  const hi = Math.max(...cs);
-  const span = hi - lo || 1;
-  const x = (i: number) => padL + (i / (prices.length - 1)) * (W - padL - padR);
-  const y = (c: number) => padT + (1 - (c - lo) / span) * (H - padT - padB);
-  const pts = prices.map((p, i) => `${x(i).toFixed(1)},${y(p.c).toFixed(1)}`).join(" ");
-  const area = `${padL},${H - padB} ${pts} ${x(prices.length - 1).toFixed(1)},${H - padB}`;
-  const last = prices[prices.length - 1];
-  const mid = prices[Math.floor((prices.length - 1) / 2)];
   return (
-    <svg
-      className="spark"
-      viewBox={`0 0 ${W} ${H}`}
-      role="img"
-      aria-label={`종가 추이 ${fmtYmd(prices[0].d)} ${fmtNum(prices[0].c, 0)}원부터 ${fmtYmd(last.d)} ${fmtNum(last.c, 0)}원까지, 최고 ${fmtNum(hi, 0)}원 최저 ${fmtNum(lo, 0)}원`}
-    >
-      <line className="axis" x1={padL} y1={H - padB} x2={W - padR} y2={H - padB} />
-      <line className="axis" x1={padL} y1={padT} x2={padL} y2={H - padB} />
-      <text className="lbl" x={padL - 6} y={y(hi) + 4} textAnchor="end">{fmtNum(hi, 0)}</text>
-      <text className="lbl" x={padL - 6} y={y(lo) + 4} textAnchor="end">{fmtNum(lo, 0)}</text>
-      <polygon className="area" points={area} />
-      <polyline className="line" points={pts} />
-      <circle className="dot" cx={x(prices.length - 1)} cy={y(last.c)} r={4} />
-      <text className="lbl" x={padL} y={H - 8}>{fmtYmd(prices[0].d)}</text>
-      <text className="lbl" x={x(Math.floor((prices.length - 1) / 2))} y={H - 8} textAnchor="middle">{fmtYmd(mid.d)}</text>
-      <text className="lbl" x={W - padR} y={H - 8} textAnchor="end">{fmtYmd(last.d)}</text>
-    </svg>
+    <LineChart
+      data={prices.map((p) => ({ d: p.d, v: p.c }))}
+      format={(v) => `${fmtNum(v, 0)}원`}
+      axisFormat={(v) => fmtNum(v, 0)}
+      label="종가 추이"
+      height={200}
+      emptyText="시세 이력이 없습니다."
+    />
   );
 }

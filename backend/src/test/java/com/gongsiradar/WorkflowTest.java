@@ -319,4 +319,18 @@ class WorkflowTest {
         List<Integer> seniorIds = com.jayway.jsonpath.JsonPath.read(seniorList, "$.data.content[*].id");
         assertThat(seniorIds).contains(mine.getId().intValue(), other.getId().intValue());
     }
+
+    @Test
+    void 시장_화면은_필터를_먼저_검사하고_AI_서버로_프록시한다() throws Exception {
+        when(aiClient.market(eq("KOSDAQ"), eq("analyst_001"), anyList()))
+                .thenReturn(java.util.Map.of("market", "KOSDAQ", "sample", true));
+        mvc.perform(get("/api/market").param("market", "kosdaq").header("Authorization", junior()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.market").value("KOSDAQ"));
+        // 잘못된 값은 AI 서버까지 가지 않는다
+        mvc.perform(get("/api/market").param("market", "NYSE").header("Authorization", junior()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+        verify(aiClient, times(1)).market(anyString(), anyString(), anyList());
+    }
 }

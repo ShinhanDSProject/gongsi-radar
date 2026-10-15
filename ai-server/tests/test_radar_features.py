@@ -205,7 +205,7 @@ class GovernanceTest(unittest.TestCase):
 class CompanyTest(unittest.TestCase):
     def test_search(self):
         rows = search_companies(sample(), "")
-        self.assertEqual(len(rows), 30)
+        self.assertEqual(len(rows), 46)          # 본 회사 1 + 피어 29 + 시장 화면용 다른 업종 16
         for r in rows:
             CompanyRow.model_validate(r)
         main = rows[0]
@@ -215,6 +215,10 @@ class CompanyTest(unittest.TestCase):
         self.assertEqual([r["stockCode"] for r in search_companies(sample(), "피어기업12")], ["888012"])
         self.assertEqual(len(search_companies(sample(), "피어", limit=5)), 5)
         self.assertEqual(search_companies(sample(), "999001")[0]["corpName"], "샘플소재㈜")
+        # 재무가 없는 기업은 빈 값이지 0이 아니다. 시가총액은 시세로 나온다
+        bank = search_companies(sample(), "가상은행")[0]
+        self.assertEqual((bank["revenue"], bank["per"]), (None, None))
+        self.assertGreater(bank["marketCap"], 0)
 
     def test_profile(self):
         p = company_profile(sample(), "00999001")

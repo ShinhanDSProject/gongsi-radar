@@ -105,6 +105,14 @@ public class AiClient {
                 .bodyToMono(Object.class));
     }
 
+    public Object market(String market, String userId, List<String> userScopes) {
+        return call(() -> aiWebClient.get()
+                .uri(b -> b.path("/ai/market").queryParam("market", market).build())
+                .headers(h -> withUser(h, userId, userScopes))
+                .retrieve()
+                .bodyToMono(Object.class));
+    }
+
     public Object agents(String userId, List<String> userScopes) {
         return call(() -> aiWebClient.get()
                 .uri("/ai/agents")

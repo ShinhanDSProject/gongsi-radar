@@ -1,15 +1,37 @@
 // 표시용 공용 함수. 금액 표기는 radar/textutil.py format_krw와 같은 규칙.
 import type { Filing, RadarReport } from "../api/types";
 
-export function fmtKRW(won: number | null | undefined): string {
+// unit: 끝에 붙는 단위. 시장 화면은 "5,454조 1,041억"처럼 단위를 떼고 쓴다(unit "")
+export function fmtKRW(won: number | null | undefined, unit = "원"): string {
   if (won == null || Number.isNaN(won)) return "—";
   const sign = won < 0 ? "-" : "";
   const eok = Math.round(Math.abs(won) / 1e8);
-  if (eok === 0) return `${sign}${Math.round(Math.abs(won) / 1e4).toLocaleString("ko-KR")}만원`;
+  if (eok === 0) return `${sign}${Math.round(Math.abs(won) / 1e4).toLocaleString("ko-KR")}만${unit}`;
   const jo = Math.floor(eok / 10000);
   const rest = eok % 10000;
-  if (jo) return rest ? `${sign}${jo.toLocaleString("ko-KR")}조 ${rest.toLocaleString("ko-KR")}억원` : `${sign}${jo}조원`;
-  return `${sign}${rest.toLocaleString("ko-KR")}억원`;
+  if (jo)
+    return rest
+      ? `${sign}${jo.toLocaleString("ko-KR")}조 ${rest.toLocaleString("ko-KR")}억${unit}`
+      : `${sign}${jo.toLocaleString("ko-KR")}조${unit}`;
+  return `${sign}${rest.toLocaleString("ko-KR")}억${unit}`;
+}
+
+// 그래프 축 눈금용 짧은 금액: "5,454조" · "820억" (소수 한 자리까지)
+export function fmtKRWAxis(won: number): string {
+  const a = Math.abs(won);
+  const f = (n: number) => n.toLocaleString("ko-KR", { maximumFractionDigits: 1 });
+  if (a >= 1e12) return `${f(won / 1e12)}조`;
+  if (a >= 1e8) return `${f(won / 1e8)}억`;
+  if (a >= 1e4) return `${f(won / 1e4)}만`;
+  return f(won);
+}
+
+// 부호 붙은 증감. 지수는 포인트(pt), 시가총액은 원 → "+12.34pt" · "-1조 234억"
+export function fmtDelta(n: number | null | undefined, kind: "pt" | "won"): string {
+  if (n == null || Number.isNaN(n)) return "—";
+  const sign = n > 0 ? "+" : n < 0 ? "-" : "";
+  if (kind === "pt") return `${sign}${fmtNum(Math.abs(n), 2)}pt`;
+  return `${sign}${fmtKRW(Math.abs(n), "")}`;
 }
 
 export function fmtPct(p: number | null | undefined, digits = 1): string {

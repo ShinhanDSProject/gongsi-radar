@@ -35,9 +35,13 @@ case "${1:-start}" in
     for f in "$PIDS"/*.pid; do
       [ -e "$f" ] || continue
       pid=$(cat "$f"); name=$(basename "$f" .pid)
-      # 자식 프로세스(gradle 데몬이 띄운 JVM, vite)까지 함께 내린다
       pkill -P "$pid" 2>/dev/null; kill "$pid" 2>/dev/null && echo "  정지: $name"
       rm -f "$f"
+    done
+    # gradlew bootRun이 띄운 JVM은 손자 프로세스라 위에서 닿지 않는다. 우리 포트를 잡고 있는 프로세스를 직접 내린다
+    for p in 9100 8100 8180 3100; do
+      left=$(lsof -nP -iTCP:"$p" -sTCP:LISTEN -t 2>/dev/null)
+      [ -n "$left" ] && kill $left 2>/dev/null && echo "  정지: :$p (pid $left)"
     done ;;
   status)
     for p in 9100:core-service 8100:ai-server 8180:backend 3100:frontend; do

@@ -73,3 +73,11 @@ def test_rag_isolates_injected_paragraph(client):
     assert all(it["trustLevel"] in ("HIGH", "MEDIUM") for it in r.json()["items"])
     denied = client.post("/ai/rag/search", json={"query": "소송", "scope": []}, headers={**KEY, "X-User-Id": "a"})
     assert denied.status_code == 403
+
+
+def test_market_requires_market_scope(client):
+    h = {**KEY, "X-User-Id": "analyst_001"}
+    ok = client.get("/ai/market?market=KOSDAQ", headers={**h, "X-User-Scopes": "MARKET_DATA_READ"})
+    assert ok.status_code == 200 and ok.json()["market"] == "KOSDAQ"
+    assert client.get("/ai/market", headers={**h, "X-User-Scopes": "DISCLOSURE_READ"}).status_code == 403
+    assert client.get("/ai/market?market=NYSE", headers={**h, "X-User-Scopes": "MARKET_DATA_READ"}).status_code == 400

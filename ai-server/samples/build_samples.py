@@ -31,6 +31,8 @@ CORP = {
     "corp_name": "샘플소재㈜",
     "stock_code": "999001",
     "induty": "2차전지 소재",
+    "induty_code": "20129",       # KSIC 20 화학물질 및 화학제품 제조업(전구체)
+    "market": "KOSDAQ",
 }
 REPORTS = {
     2024: {"rcept_no": "20250318000412", "rcept_dt": "20250318", "report_nm": "사업보고서 (2024.12)", "fy": 11},
@@ -428,8 +430,26 @@ def peers(y: int) -> list[dict]:
     return out
 
 
+# 피어는 같은 2차전지 소재 업종이지만 KSIC로는 화학(20)·전기장비(28)·전자부품(26)에 나뉜다(실제로도 그렇다)
+_PEER_KSIC = ("20129", "28202", "26299")
 PEERS = [{"corp_code": f"00888{i:03d}", "corp_name": f"피어기업{i:02d}(가상)", "stock_code": f"888{i:03d}",
-          "induty": "2차전지 소재"} for i in range(1, 30)]
+          "induty": "2차전지 소재", "induty_code": _PEER_KSIC[i % 3], "market": "KOSPI" if i % 3 == 0 else "KOSDAQ"}
+         for i in range(1, 30)]
+
+# 시장 화면(업종 지도)용 다른 업종 가상 기업. 시세와 공시 목록만 있고 재무·원문은 없다
+MARKET_ONLY = [  # (이름, KSIC, 시장, 상장주식수(백만 주), 시작가)
+    ("가상은행㈜", "64191", "KOSPI", 480, 52_000), ("가상증권㈜", "66121", "KOSPI", 120, 18_500),
+    ("가상손해보험㈜", "65121", "KOSPI", 60, 41_000), ("가상텔레콤㈜", "61220", "KOSPI", 300, 47_500),
+    ("가상소프트㈜", "58222", "KOSDAQ", 40, 88_000), ("가상게임즈㈜", "58211", "KOSDAQ", 25, 63_000),
+    ("가상유통㈜", "47111", "KOSPI", 90, 24_300), ("가상건설㈜", "41221", "KOSPI", 70, 15_800),
+    ("가상해운㈜", "50112", "KOSPI", 150, 21_700), ("가상항공㈜", "51100", "KOSPI", 110, 19_400),
+    ("가상에너지㈜", "35200", "KOSPI", 200, 33_000), ("가상바이오리서치㈜", "70113", "KOSDAQ", 30, 142_000),
+    ("가상자동차㈜", "30121", "KOSPI", 260, 212_000), ("가상반도체㈜", "26110", "KOSPI", 600, 176_000),
+    ("가상제약㈜", "21210", "KOSDAQ", 45, 96_000), ("가상신소재㈜", "22299", "KONEX", 8, 7_400),
+]
+OTHERS = [{"corp_code": f"00777{i:03d}", "corp_name": n, "stock_code": f"777{i:03d}", "induty": None,
+           "induty_code": k, "market": m, "_shares": sh * 1_000_000, "_px": px}
+          for i, (n, k, m, sh, px) in enumerate(MARKET_ONLY, 1)]
 
 
 # ---- 지배구조 (OpenDART hyslrSttus·exctvSttus·otrCprInvstmntSttus 형태) ----------------------
@@ -529,11 +549,36 @@ def weekdays(start: date, end: date) -> list[date]:
 
 
 def market(corp: dict, shares: int, start_price: float, seed: int) -> dict:
-    """결정적 가격 경로(가상). 응답 모양과 문자열 필드는 실제 API를 따른다."""
+    """결정적 가격 경로(가상). 응답 모양과 문자열 필드는 실제 API를 따른다.
+
+    2026-07-01~10-14 구간은 처음 만든 난수열 그대로라 시장 지표(PER·PBR) 값이 바뀌지 않는다.
+    시장 화면의 1년 추이를 위해 그 앞(2025-10-14~2026-06-30)을 별도 난수열로 거꾸로 이어 붙인다 —
+    1년 전 수준에서 오르다가 6월 무렵 꺾이는 흐름(시장 전체에 공통 요인을 섞는다).
+    """
     rng = random.Random(seed)
+    tick = 100 if start_price >= 50_000 else (50 if start_price >= 10_000 else 10)
+    back = random.Random(seed + 7)
+    past_days = weekdays(date(2025, 10, 14), date(2026, 6, 30))
+    path, px = [], start_price
+    for k, d in enumerate(reversed(past_days)):          # 7월 1일에서 과거로 걸어간다
+        common = 0.0018 if k < 60 else -0.0021            # 최근 석 달은 오름세, 그 이전은 상승 추세였다(거꾸로 보면 하락)
+        px = max(tick, px / (1 + common + back.gauss(0.0, 0.011)))
+        path.append((d, px))
+    path.reverse()
+    hist = []
+    for d, p in path:
+        close = int(round(p / tick) * tick)
+        hist.append((d, close))
     days = weekdays(date(2026, 7, 1), date(2026, 10, 14))
     px, prev, items = start_price, None, []
-    tick = 100 if start_price >= 50_000 else (50 if start_price >= 10_000 else 10)
+    for d, close in hist:
+        vs = 0 if prev is None else close - prev
+        items.append({"basDt": d.strftime("%Y%m%d"), "srtnCd": corp["stock_code"], "isinCd": f"KR7{corp['stock_code']}004",
+                      "itmsNm": corp["corp_name"], "mrktCtg": corp.get("market", "KOSDAQ"), "clpr": str(close),
+                      "vs": str(vs), "fltRt": f"{(vs / prev * 100) if prev else 0:.2f}",
+                      "lstgStCnt": str(shares), "mrktTotAmt": str(close * shares)})
+        prev = close
+    prev = None   # 기존 구간은 처음 만든 그대로(첫날 대비 0)
     for d in days:
         px = max(tick, px * (1 + rng.gauss(0.0, 0.012)))
         close = int(round(px / tick) * tick)
@@ -542,7 +587,7 @@ def market(corp: dict, shares: int, start_price: float, seed: int) -> dict:
         vol = int(rng.uniform(40_000, 400_000))
         vs = 0 if prev is None else close - prev
         items.append({"basDt": d.strftime("%Y%m%d"), "srtnCd": corp["stock_code"], "isinCd": f"KR7{corp['stock_code']}004",
-                      "itmsNm": corp["corp_name"], "mrktCtg": "KOSDAQ", "clpr": str(close), "vs": str(vs),
+                      "itmsNm": corp["corp_name"], "mrktCtg": corp.get("market", "KOSDAQ"), "clpr": str(close), "vs": str(vs),
                       "fltRt": f"{(vs / prev * 100) if prev else 0:.2f}", "mkp": str(opn), "hipr": str(hi), "lopr": str(lo),
                       "trqu": str(vol), "trPrc": str(vol * close), "lstgStCnt": str(shares), "mrktTotAmt": str(close * shares)})
         prev = close
@@ -552,8 +597,27 @@ def market(corp: dict, shares: int, start_price: float, seed: int) -> dict:
                                   "items": {"item": items}}}}
 
 
-def _dump(name: str, obj) -> None:
-    (OUT / name).write_text(json.dumps(obj, ensure_ascii=False, indent=1), encoding="utf-8")
+def recent_listing() -> list[dict]:
+    """시장 화면 '최근 정기보고서'용 다른 회사 공시 목록(원문·재무 없음). 8월 반기보고서와 10월 기재정정 몇 건."""
+    rng = random.Random(20261015)
+    rows = []
+    for k, c in enumerate(PEERS[:10] + OTHERS[:8]):
+        day = 10 + k % 5
+        rows.append({"corp_cls": "Y" if c["market"] == "KOSPI" else "K", "corp_name": c["corp_name"],
+                     "corp_code": c["corp_code"], "stock_code": c["stock_code"], "report_nm": "반기보고서 (2026.06)",
+                     "rcept_no": f"202608{day:02d}{800100 + k:06d}", "flr_nm": c["corp_name"],
+                     "rcept_dt": f"202608{day:02d}", "rm": ""})
+        if rng.random() < 0.3:
+            rows.append({**rows[-1], "report_nm": "[기재정정]반기보고서 (2026.06)",
+                         "rcept_no": f"202610{13 + k % 2:02d}{900100 + k:06d}", "rcept_dt": f"202610{13 + k % 2:02d}",
+                         "rm": "정"})
+    return rows
+
+
+def _dump(name: str, obj, compact: bool = False) -> None:
+    text = json.dumps(obj, ensure_ascii=False, separators=(",", ":")) if compact else \
+        json.dumps(obj, ensure_ascii=False, indent=1)
+    (OUT / name).write_text(text, encoding="utf-8")
 
 
 def main() -> None:
@@ -575,18 +639,23 @@ def main() -> None:
         "report_nm": r["report_nm"], "rcept_no": r["rcept_no"], "flr_nm": CORP["corp_name"],
         "rcept_dt": r["rcept_dt"], "rm": "",
     } for r in (HALF, REPORTS[2025], REPORTS[2024])]  # 반기보고서는 원문 ZIP 없이 목록·재무만
+    listing += recent_listing()
     (OUT / "list.json").write_text(json.dumps({"status": "000", "message": "정상", "list": listing},
                                               ensure_ascii=False, indent=1), encoding="utf-8")
-    (OUT / "corp_codes.json").write_text(json.dumps([CORP] + PEERS, ensure_ascii=False, indent=1), encoding="utf-8")
+    others = [{k: v for k, v in o.items() if not k.startswith("_")} for o in OTHERS]
+    (OUT / "corp_codes.json").write_text(json.dumps([CORP] + PEERS + others, ensure_ascii=False, indent=1),
+                                         encoding="utf-8")
 
     # 시세: 본 회사는 2천만 주·6만5천원 안팎, 피어는 시가총액이 매출의 0.4~0.9배 안팎이 되도록
-    _dump(f"market_{CORP['stock_code']}.json", market(CORP, SHARES, 65_000, 9_990_001))
+    _dump(f"market_{CORP['stock_code']}.json", market(CORP, SHARES, 65_000, 9_990_001), compact=True)
     rev25 = {r["corp_code"]: int(r["thstrm_amount"].replace(",", "")) for r in peers(2025) if r["account_nm"] == "매출액"}
     rng = random.Random(55_001)
     for p in PEERS:
         shares = int(rng.uniform(10, 60)) * 1_000_000
         cap = rev25[p["corp_code"]] * rng.uniform(0.4, 0.9)
-        _dump(f"market_{p['stock_code']}.json", market(p, shares, cap / shares, int(p["stock_code"])))
+        _dump(f"market_{p['stock_code']}.json", market(p, shares, cap / shares, int(p["stock_code"])), compact=True)
+    for o in OTHERS:
+        _dump(f"market_{o['stock_code']}.json", market(o, o["_shares"], o["_px"], int(o["stock_code"])), compact=True)
     lawsuits = [{
         "rcept_no": "20250919000077", "corp_cls": "K", "corp_code": CORP["corp_code"], "corp_name": CORP["corp_name"],
         "icnm": "특허침해금지 및 손해배상 청구", "ac_ap": "㈜샘플에너지머티리얼",

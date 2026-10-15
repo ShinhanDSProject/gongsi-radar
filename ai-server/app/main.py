@@ -13,7 +13,7 @@ load_dotenv()            # radar 라이브러리가 읽는 RADAR_* 환경변수�
 from fastapi import FastAPI  # noqa: E402
 
 from .config import settings  # noqa: E402
-from .routers import agents, analyses, companies, guardrails, health, llm, rag, tools  # noqa: E402
+from .routers import agents, analyses, companies, guardrails, health, llm, market, rag, tools  # noqa: E402
 from .safety.context import RequestUidLogFilter  # noqa: E402
 from .tools.registry import register_default_tools  # noqa: E402
 
@@ -30,7 +30,7 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title=settings.service_name, version=settings.version, lifespan=lifespan)
-for r in (health, analyses, rag, tools, agents, guardrails, llm, companies):
+for r in (health, analyses, rag, tools, agents, guardrails, llm, companies, market):
     app.include_router(r.router)
 
 
