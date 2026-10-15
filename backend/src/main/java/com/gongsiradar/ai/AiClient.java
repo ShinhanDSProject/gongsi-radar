@@ -131,6 +131,14 @@ public class AiClient {
                 .bodyToMono(MAP_TYPE));
     }
 
+    public Map<String, Object> ingestStatus(String userId) {
+        return call(() -> aiWebClient.get()
+                .uri("/ai/ingest/status")
+                .headers(h -> withUser(h, userId, null))
+                .retrieve()
+                .bodyToMono(MAP_TYPE));
+    }
+
     public Map<String, Object> switchLlmProvider(String provider, String userId) {
         try {
             return aiWebClient.post()

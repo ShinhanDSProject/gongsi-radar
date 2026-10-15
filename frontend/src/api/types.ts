@@ -647,5 +647,52 @@ export interface MarketOverview {
   indices: MarketIndex[];
   sectors: SectorNode;
   recentFilings: MarketFiling[];
+  /** #3 일일 수집이 켜져 있을 때만 채워진다. 첫 적재일에 들어온 회사는 신규가 아니다 */
+  newListings?: MarketNewListing[];
+  newListingsNote?: string;
+  /** 적재 DB(일일 수집)를 읽었는가 */
+  ingested?: boolean;
   notes: string[];
+}
+
+export interface MarketNewListing {
+  corpCode: string;
+  corpName: string;
+  stockCode: string | null;
+  market: string | null;
+  firstSeen: string;
+  marketCap: number | null;
+}
+
+// ---- 일일 수집 상태(#3, /api/admin/ingest) ----
+export interface IngestStep {
+  step: string;
+  status: "DONE" | "PARTIAL" | "FAILED" | "SKIPPED" | "RUNNING";
+  calls: number;
+  rows: number;
+  remaining: number;
+  error: string | null;
+  finishedAt: string | null;
+}
+export interface IngestRun {
+  runUid: string;
+  mode: string;
+  source: string;
+  status: IngestStep["status"];
+  startedAt: string;
+  finishedAt: string | null;
+  calls: number;
+  rows: number;
+}
+export interface IngestStatus {
+  enabled: boolean;
+  reason: string | null;
+  budget: number;
+  callsToday?: number;
+  budgetLeft?: number;
+  lastMarketDate?: string | null;
+  tables: Record<string, number>;
+  lastRun?: IngestRun;
+  runs: IngestRun[];
+  steps: IngestStep[];
 }

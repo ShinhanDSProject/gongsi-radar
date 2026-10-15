@@ -333,4 +333,14 @@ class WorkflowTest {
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
         verify(aiClient, times(1)).market(anyString(), anyString(), anyList());
     }
+
+    @Test
+    void 수집_상태는_Senior만_본다() throws Exception {
+        when(aiClient.ingestStatus(anyString())).thenReturn(java.util.Map.of("enabled", true));
+        mvc.perform(get("/api/admin/ingest").header("Authorization", junior()))
+                .andExpect(status().isForbidden());
+        mvc.perform(get("/api/admin/ingest").header("Authorization", senior()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.enabled").value(true));
+    }
 }

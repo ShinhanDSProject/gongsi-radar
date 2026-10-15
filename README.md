@@ -183,7 +183,24 @@ scripts/db.sh down       # MariaDB 컨테이너 정지(데이터는 남는다. �
 | 발행 요청이 409 | Core가 거절한 사유가 화면에 나온다(같은 리포트의 대기 건, 하루 한도 등) |
 | MariaDB를 처음부터 다시 | `docker rm -f gongsi-mariadb && scripts/db.sh up` (감사 로그 등 모든 데이터가 지워진다) |
 
-### 7. 도메인 라이브러리만 쓰기
+### 7. 일일 수집(전 종목 적재)
+
+기업 목록·시장 화면·업종 지도를 전 종목으로 보려면 하루 한 번 수집을 돌린다. 수집은 서버가 아니라 예약 작업(cron)이 수집 전용 DB 계정으로 돌린다.
+
+```bash
+cd ai-server
+export RADAR_INGEST_WRITE_DB="mysql+pymysql://gongsi_ingest:ingest-pass@localhost:3307/gongsi?charset=utf8mb4"
+export RADAR_AUDIT_DB="mysql+pymysql://gongsi_audit:audit-only-pass@localhost:3307/gongsi?charset=utf8mb4"
+.venv/bin/python -m radar ingest daily --budget 15000   # 상장사·최근 공시·시세·지수·재무·업종·원문 증분
+.venv/bin/python -m radar ingest backfill --years 3     # 회사별 지난 정기공시·재무(여러 날에 걸쳐 이어서)
+.venv/bin/python -m radar ingest status                 # 최근 실행 기록
+```
+
+- 같은 날 두 번 돌려도 결과가 같고, 호출 예산이 떨어지면 다음 실행이 이어서 처리한다. Kill Switch가 켜져 있으면 수집도 멈춘다.
+- 서버는 `ai-server/.env`의 `RADAR_INGEST_DB`(앱 계정, 읽기)로 적재 DB를 먼저 읽고, 비어 있으면 원천을 쓴다.
+- 관리 화면 "데이터 수집"에서 마지막 수집 시각·단계별 결과·남은 호출 예산을 본다.
+
+### 8. 도메인 라이브러리만 쓰기
 
 서버 없이 `radar` 라이브러리만 돌릴 수 있다.
 
@@ -205,12 +222,14 @@ cd ai-server
 | `04_governance_schema.sql` | 감사 3종·Kill Switch·`gongsi_audit`/`gongsi_app` 계정 |
 | `05_llm_schema.sql` | LLM 호출 기록 |
 | `06_rag_schema.sql` | RAG 문서·청크 메타(벡터는 Chroma) |
+| `07_ingest_schema.sql` | 일일 수집 적재 테이블·`gongsi_ingest` 계정 |
 
 | 계정 | 쓰는 곳 | 권한 |
 |---|---|---|
 | root | DDL 적용(사람) | 전부 |
 | `gongsi_app` | Spring·FastAPI 런타임 | 업무 테이블 읽기·쓰기, 감사 테이블 읽기만, DELETE 없음 |
 | `gongsi_audit` | 감사 기록 전용 커넥션 | 감사 테이블 INSERT·SELECT만(append-only, `prev_hash` 해시 체인) |
+| `gongsi_ingest` | 일일 수집 작업 | 적재 테이블 SELECT·INSERT·UPDATE만(DELETE 없음) |
 
 ## 테스트
 

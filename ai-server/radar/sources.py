@@ -467,7 +467,13 @@ class DataGoKrIndex:
         return rows
 
 
-def make_source(settings):
+def make_source(settings, *, ingested: bool = True):
+    """원천 소스. 적재 DB(RADAR_INGEST_DB)가 있으면 그것을 먼저 읽는 래퍼로 감싼다(ingested=False면 원천 그대로 — 수집 작업용)."""
     if settings.source == "opendart":
-        return OpenDartSource(settings.dart_api_key, settings.cache_dir, settings.peers_file)
-    return SampleSource(settings.sample_dir)
+        src = OpenDartSource(settings.dart_api_key, settings.cache_dir, settings.peers_file)
+    else:
+        src = SampleSource(settings.sample_dir)
+    if ingested and getattr(settings, "ingest_db", None):
+        from .ingest.dbsource import wrap
+        return wrap(src, settings.ingest_db)
+    return src

@@ -50,6 +50,8 @@ class Settings:
     llm_model_small: str = field(default_factory=lambda: os.getenv("RADAR_LLM_SMALL", "gpt-4o-mini"))
     llm_model_large: str = field(default_factory=lambda: os.getenv("RADAR_LLM_LARGE", "gpt-4o"))
     peers_file: Path | None = field(default_factory=lambda: Path(p) if (p := os.getenv("RADAR_PEERS_FILE")) else None)
+    # #3 적재 DB(읽기). 비어 있으면 원천만 쓴다. 쓰기(수집)는 RADAR_INGEST_WRITE_DB(수집 전용 계정)
+    ingest_db: str | None = field(default_factory=lambda: os.getenv("RADAR_INGEST_DB") or None)
     demo_fault_injection: bool = False  # 시연용: 첫 시도에서 수치 오류를 주입해 반려 루프를 보여 줌
 
     @property

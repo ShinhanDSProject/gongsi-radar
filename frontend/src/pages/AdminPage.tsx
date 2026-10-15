@@ -1,5 +1,6 @@
 import AuditPanel from "./admin/AuditPanel";
 import GuardrailEventsCard from "./admin/GuardrailEventsCard";
+import IngestCard from "./admin/IngestCard";
 import KillSwitchCard from "./admin/KillSwitchCard";
 import ProviderCard from "./admin/ProviderCard";
 
@@ -10,12 +11,13 @@ export default function AdminPage() {
     <div className="stack">
       <div className="page-h">
         <h1>관리</h1>
-        <span className="hint">Kill Switch·LLM 공급자·가드레일 차단·감사 로그</span>
+        <span className="hint">Kill Switch·LLM 공급자·데이터 수집·가드레일 차단·감사 로그</span>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <KillSwitchCard />
         <ProviderCard />
       </div>
+      <IngestCard />
       <GuardrailEventsCard />
       <AuditPanel />
     </div>

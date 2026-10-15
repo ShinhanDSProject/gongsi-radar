@@ -92,6 +92,49 @@ function CapSection({ data, busy }: { data: MarketOverview; busy: boolean }) {
   );
 }
 
+// '새로 확인한 기업' — 일일 수집에서 처음 본 회사. 확인일은 공식 상장일이 아니다
+function NewListings({ data }: { data: MarketOverview }) {
+  const rows = data.newListings ?? [];
+  return (
+    <section className="panel" aria-labelledby="sec-new">
+      <header className="panel-h">
+        <h2 id="sec-new">새로 확인한 기업</h2>
+        <span className="hint">최근 30일</span>
+      </header>
+      <p className="hint">{data.newListingsNote}</p>
+      {rows.length === 0 ? (
+        <p>아직 새로 확인한 기업이 없습니다. 다음 정상 수집부터 기록합니다.</p>
+      ) : (
+        <div className="scroll-x">
+          <table className="grid-table">
+            <thead>
+              <tr>
+                <th scope="col">확인일</th>
+                <th scope="col">기업</th>
+                <th scope="col">시장</th>
+                <th scope="col" className="r">시가총액</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.corpCode}>
+                  <td className="num whitespace-nowrap">{fmtYmd(r.firstSeen)}</td>
+                  <td>
+                    <Link to={`/companies/${r.corpCode}`}>{r.corpName}</Link>
+                    {r.stockCode && <span className="hint mono"> {r.stockCode}</span>}
+                  </td>
+                  <td>{r.market ? MARKET_LABEL[r.market as MarketCode] ?? r.market : "—"}</td>
+                  <td className="r num">{fmtKRW(r.marketCap)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
+  );
+}
+
 function RecentFilings({ data }: { data: MarketOverview }) {
   const rows = data.recentFilings;
   return (
@@ -202,6 +245,9 @@ export default function MarketPage() {
 
       {d && !forbidden && (
         <>
+          {/* 0. 새로 확인한 기업 — 일일 수집(적재 DB)이 켜져 있을 때만 */}
+          {d.ingested && <NewListings data={d} />}
+
           {/* 1. 지수 추이 — 시장 필터와 무관 */}
           <section aria-labelledby="sec-index" className="flex flex-col gap-2">
             <h2 id="sec-index" className="sec-h">지수 추이</h2>

@@ -325,12 +325,24 @@ def market_overview(source, market: str = "ALL") -> dict:
     corp_market = {c["corp_code"]: mkt.get(code) or c.get("market") for code, c in corps.items()}
     recent = recent_table(filings, latest, corp_market, market)
 
+    # 새로 확인한 기업(적재 DB가 있을 때만). 첫 적재일에 들어온 회사는 신규가 아니다
+    new = []
+    if hasattr(source, "new_listings"):
+        for c in source.new_listings(30):
+            code = c.get("stock_code") or ""
+            new.append({"corpCode": c["corp_code"], "corpName": c["corp_name"], "stockCode": code or None,
+                        "market": c.get("market") or mkt.get(code), "firstSeen": str(c["first_seen"]),
+                        "marketCap": latest.get(code)})
+    new_note = ("일일 수집에서 처음 확인한 기업입니다. 확인일은 공식 상장일과 다를 수 있습니다."
+                if hasattr(source, "new_listings") else "일일 수집(적재 DB)이 켜져 있을 때만 표시합니다.")
+
     universe = (f"추적 기업 {counts['ALL']}개사(가상 샘플)" if sample else f"상장 종목 {counts['ALL']:,}개")
     notes.append("시가총액은 종목별 시가총액(mrktTotAmt)의 합계입니다"
                  + ("" if sample else "(보통주·우선주 등 상장 종목을 각각 더함)") + ". 투자 판단 자료가 아닙니다.")
     return {"asOf": as_of, "market": market,
             "markets": [{"code": m, "label": lab, "count": counts[m]} for m, lab in MARKETS],
             "universeNote": universe, "sample": sample, "capitalization": capitalization, "indices": indices,
-            "sectors": tree, "recentFilings": recent, "notes": notes}
+            "sectors": tree, "recentFilings": recent, "newListings": new, "newListingsNote": new_note,
+            "ingested": bool(getattr(source, "ingested", False)), "notes": notes}
 
 

@@ -328,3 +328,12 @@ SectorNode = { id: string, name: string, level: "root"|"section"|"division"|"com
 ```
 - 지수 `delta`는 포인트, 시가총액 `delta`는 원. 기간 기준일은 `to`(최신)에서 거꾸로 7일·1개월·1년 이내 마지막 거래일이며, 그만큼 데이터가 없으면 `pct: null` + `reason`.
 - 트리맵 면적 = 시가총액, 색은 등락률을 나타내지 않는다(대분류 구분색). 업종은 KSIC(한국표준산업분류) 대분류 → 중분류 → 기업.
+
+## 10. 일일 수집(#3)
+
+- 적재 테이블: `scripts/sql/07_ingest_schema.sql`(`ingest_company`·`ingest_filing`·`ingest_financial_line`·`ingest_market_daily`·`ingest_index_daily`·`ingest_run`). 쓰기는 수집 전용 계정 `gongsi_ingest`(SELECT·INSERT·UPDATE, DELETE 없음), 앱 계정은 읽기만.
+- 수집은 요청을 받는 서버가 아니라 예약 작업이 돌린다. 원천 API 키와 적재 쓰기 권한을 서버에 두지 않는다.
+- `MarketOverview`에 추가: `newListings: {corpCode, corpName, stockCode, market, firstSeen, marketCap}[]`, `newListingsNote: string`, `ingested: boolean`.
+  첫 적재일에 들어온 회사는 신규가 아니다(확인일 ≠ 공식 상장일).
+- 관리: Spring `GET /api/admin/ingest`(Senior) → 수집 상태 `{enabled, reason, budget, callsToday, budgetLeft, lastMarketDate, tables, lastRun, runs[], steps[]}`. 조회만 있고 수집 시작 API는 없다.
+- 감사: 실행마다 `audit_log`에 `INGEST_RUN`(단계별 상태·호출 수·행 수, 키·본문 없음).

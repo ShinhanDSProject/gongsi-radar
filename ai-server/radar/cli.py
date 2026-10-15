@@ -81,6 +81,69 @@ def _progress(e: dict) -> None:
         print(f"  ▶ {e['label']}" + (f" ({e['round'] + 1}차)" if again else ""), file=sys.stderr)
 
 
+def _audit_ingest(rep, source_name: str) -> None:
+    """수집 결과를 감사 로그(audit_log)에 한 줄 남긴다. RADAR_AUDIT_DB(감사 전용 계정)가 있을 때만.
+    키 값·응답 본문은 남기지 않는다 — 단계별 상태·호출 수·행 수·실패 사유만. 해시 체인은 AI 서버·Spring과 같은 규칙."""
+    import hashlib
+    import os
+
+    import sqlalchemy as sa
+
+    url = os.getenv("RADAR_AUDIT_DB")
+    if not url:
+        return
+    payload = json.dumps({"runUid": rep.run_uid, "mode": rep.mode, "source": source_name, "calls": rep.calls,
+                          "steps": [{"step": s.step, "status": s.status, "calls": s.calls, "rows": s.rows,
+                                     "remaining": s.remaining, "error": (s.error or "")[:200]} for s in rep.steps]},
+                         ensure_ascii=False, sort_keys=True)
+    try:
+        with sa.create_engine(url).begin() as conn:
+            prev = conn.execute(sa.text("SELECT payload_hash FROM audit_log ORDER BY id DESC LIMIT 1")).scalar()
+            conn.execute(sa.text("INSERT INTO audit_log (type, request_uid, user_id, agent_id, payload_json, payload_hash,"
+                                 " prev_hash) VALUES ('INGEST_RUN', :uid, 'system', 'ingest', :p, :h, :prev)"),
+                         {"uid": rep.run_uid, "p": payload, "h": hashlib.sha256(payload.encode()).hexdigest(), "prev": prev})
+    except Exception as e:                                   # 감사 기록 실패가 수집 결과를 바꾸지 않는다
+        print(f"감사 로그 기록 실패: {type(e).__name__}: {e}", file=sys.stderr)
+
+
+def _ingest(a) -> int:
+    import os
+
+    import sqlalchemy as sa
+
+    from .ingest import Ingestor, IngestStore, STEPS
+    from .ingest.tables import metadata
+    from .sources import make_source
+
+    url = a.db or os.getenv("RADAR_INGEST_WRITE_DB")
+    if not url:
+        p = ROOT / "data" / "ingest.db"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        url = f"sqlite:///{p}"
+    engine = sa.create_engine(url, pool_pre_ping=True)
+    if engine.dialect.name == "sqlite":
+        metadata.create_all(engine)         # MariaDB는 scripts/sql/07_ingest_schema.sql을 관리자가 적용한다
+    store = IngestStore(engine)
+    if a.mode == "status":
+        for r in reversed(store.recent_runs(20)):
+            print(f"{r['started_at']:%m-%d %H:%M} {r['run_uid']} {r['mode']:<8} {r['step']:<10} {r['status']:<8} "
+                  f"호출 {r['calls']:>5} 행 {r['rows_written']:>6}" + (f" 남음 {r['remaining']}" if r['remaining'] else "")
+                  + (f" · {r['error_message'][:80]}" if r['error_message'] else ""))
+        return 0
+    src = make_source(Settings(), ingested=False)        # 수집은 항상 원천에서
+    steps = tuple(x.strip() for x in a.steps.split(",")) if a.steps else STEPS
+    ing = Ingestor(src, store, budget=a.budget,
+                   on_step=lambda r: print(f"  {r.step:<10} {r.status:<8} 호출 {r.calls:>5} · 행 {r.rows:>6}"
+                                           + (f" · 남음 {r.remaining}" if r.remaining > 0 else "")
+                                           + (f" · {r.error}" if r.error else ""), file=sys.stderr))
+    print(f"수집 시작: {a.mode} · 원천 {src.name} · 예산 {a.budget:,}회 · DB {engine.url.render_as_string(hide_password=True)}",
+          file=sys.stderr)
+    rep = ing.run(a.mode, steps=steps, years=a.years, documents=not a.no_documents)
+    _audit_ingest(rep, src.name)
+    print(f"끝: 호출 {rep.calls:,}회 · {rep.run_uid}")
+    return 1 if any(s.status == "FAILED" for s in rep.steps) else 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="radar", description="공시레이더 프로토타입")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -98,6 +161,13 @@ def main(argv: list[str] | None = None) -> int:
     ps.add_argument("--rcept-no", help="접수번호(생략 시 파일명에서)")
     ps.add_argument("--blocks", action="store_true", help="문단·표 목록까지 출력")
     sub.add_parser("schema", help="리포트 JSON Schema")
+    ig = sub.add_parser("ingest", help="#3 일일 수집: 원천 → 적재 DB")
+    ig.add_argument("mode", choices=["daily", "backfill", "status"])
+    ig.add_argument("--db", help="적재 DB URL(기본 RADAR_INGEST_WRITE_DB, 없으면 ai-server/data/ingest.db SQLite)")
+    ig.add_argument("--budget", type=int, default=15_000, help="원천 API 호출 예산(캐시 적중은 세지 않음)")
+    ig.add_argument("--years", type=int, default=3, help="backfill: 몇 년치 정기공시")
+    ig.add_argument("--steps", help=f"쉼표로 구분한 단계만(기본 전부)")
+    ig.add_argument("--no-documents", action="store_true", help="원문 ZIP은 받지 않음")
     cs = sub.add_parser("companies", help="기업 목록·검색")
     cs.add_argument("q", nargs="?", default="")
     cs.add_argument("--limit", type=int, default=50)
@@ -165,6 +235,9 @@ def main(argv: list[str] | None = None) -> int:
                         print(f"      {b.id}  {b.text[:80]}")
         return 0
 
+
+    if a.cmd == "ingest":
+        return _ingest(a)
 
     if a.cmd == "schema":
         from .schemas import Report

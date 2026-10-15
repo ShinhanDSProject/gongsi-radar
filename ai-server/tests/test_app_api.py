@@ -81,3 +81,24 @@ def test_market_requires_market_scope(client):
     assert ok.status_code == 200 and ok.json()["market"] == "KOSDAQ"
     assert client.get("/ai/market", headers={**h, "X-User-Scopes": "DISCLOSURE_READ"}).status_code == 403
     assert client.get("/ai/market?market=NYSE", headers={**h, "X-User-Scopes": "MARKET_DATA_READ"}).status_code == 400
+
+
+def test_ingest_status_reads_run_log(client, monkeypatch):
+    import sqlalchemy as sa
+    from sqlalchemy.pool import StaticPool
+
+    from app.routers import ingest as ingest_router
+    from radar.config import Settings
+    from radar.ingest import Ingestor, IngestStore
+    from radar.ingest.tables import metadata
+    from radar.sources import SampleSource
+
+    e = sa.create_engine("sqlite://", poolclass=StaticPool, connect_args={"check_same_thread": False})
+    monkeypatch.setattr(ingest_router, "get_engine", lambda: e)
+    metadata.create_all(e)
+    assert client.get("/ai/ingest/status", headers=KEY).json()["runs"] == []
+    Ingestor(SampleSource(Settings().sample_dir), IngestStore(e)).run("daily", steps=("companies", "market"))
+    body = client.get("/ai/ingest/status", headers=KEY).json()
+    assert body["lastRun"]["status"] == "DONE" and body["tables"]["ingest_company"] == 46
+    assert [s["step"] for s in body["steps"]] == ["companies", "market"]
+    assert body["budgetLeft"] == body["budget"] - body["callsToday"]
