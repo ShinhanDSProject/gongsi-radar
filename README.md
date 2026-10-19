@@ -107,7 +107,7 @@ gongsi-radar/
 ├─ db/                  schema/01~07 DDL·계정, seed.sql
 ├─ scripts/             db.sh(MariaDB) · dev.sh(전체 기동·종료)
 ├─ samples/             가상 샘플 데이터(두 서버가 같이 씀)
-└─ docs/                CONTRACT.md(서비스 간 계약) · report.schema.json
+└─ docs/                FEATURES.md(기능 정리) · CONTRACT.md(서비스 간 계약) · report.schema.json
 ```
 
 ## 실행 방법
