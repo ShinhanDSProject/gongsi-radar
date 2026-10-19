@@ -263,6 +263,7 @@ class IngestorTest {
         Ingestor.RunReport rep = ingestor(flaky, store, 15_000, TODAY).run("daily");
         Map<String, String> st = statuses(rep);
         assertThat(st.get("induty")).isEqualTo("PARTIAL");
+        assertThat(rep.steps().stream().filter(x -> x.step.equals("induty")).findFirst().orElseThrow().rows).isEqualTo(5);
         assertThat(st).doesNotContainKey("documents");   // 같은 원천을 부르는 다음 단계는 돌리지 않는다
         Integer checked = new JdbcTemplate(ds).queryForObject(
                 "SELECT COUNT(*) FROM ingest_company WHERE induty_checked IS NOT NULL", Integer.class);

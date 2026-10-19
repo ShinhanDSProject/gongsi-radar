@@ -58,6 +58,9 @@ public class Ingestor {
     static final int FINANCIAL_GIVE_UP_DAYS = 30;
     private static final DateTimeFormatter YMD = DateTimeFormatter.BASIC_ISO_DATE;
 
+    /** 진행 중인 단계가 지금까지 쓴 행. 원천이 끊겨 단계가 예외로 끝나도 결과에 남긴다 */
+    private int stepRows;
+
     static class BudgetExhausted extends RuntimeException {
         BudgetExhausted() {
             super(null, null, false, false);
@@ -183,6 +186,7 @@ public class Ingestor {
         }
         boolean sourceDown = false;
         for (String step : STEPS) {
+            stepRows = 0;
             if (!steps.contains(step) || ("documents".equals(step) && !documents)) continue;
             StepResult res = new StepResult(step);
             long rid = store.startRun(report.runUid(), mode, step, src.name(), now.get());
@@ -212,6 +216,7 @@ public class Ingestor {
                 log.warn("원천 연결 실패로 수집 중단: {} — {}", step, e.getMessage());
                 res.status = "PARTIAL";
                 res.remaining = res.remaining != 0 ? res.remaining : -1;
+                res.rows = stepRows;   // 멈추기 전까지 쓴 행
                 res.error = e.getMessage();
                 sourceDown = true;
             } catch (Exception e) {   // 한 단계 실패가 다른 단계를 막지 않는다
@@ -457,6 +462,7 @@ public class Ingestor {
             store.jdbc().update("UPDATE " + IngestStore.COMPANY + " SET induty_code = ?, induty_checked = ? WHERE corp_code = ?",
                     code, today, corp);
             n++;
+            stepRows = n;
         }
         return new Counts(n, remaining);
     }
