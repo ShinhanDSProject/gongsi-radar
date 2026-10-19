@@ -34,7 +34,7 @@ CREATE TABLE ingest_financial_line (
   fs_div             VARCHAR(8)   NOT NULL,
   rcept_no           VARCHAR(20),
   sj_div             VARCHAR(8),
-  account_id         VARCHAR(200),
+  account_id         VARCHAR(512),
   account_nm         VARCHAR(200) NOT NULL,
   ord                INT,
   thstrm_nm          VARCHAR(64),

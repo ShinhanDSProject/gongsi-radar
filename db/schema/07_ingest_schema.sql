@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS ingest_financial_line (
   fs_div             VARCHAR(8)   NOT NULL,       -- CFS, OFS
   rcept_no           VARCHAR(20),
   sj_div             VARCHAR(8),
-  account_id         VARCHAR(200),
+  account_id         VARCHAR(512),             -- 확장 표준계정 ID는 200자를 넘는다(실측 205자)
   account_nm         VARCHAR(200) NOT NULL,
   ord                INT,
   thstrm_nm          VARCHAR(64),

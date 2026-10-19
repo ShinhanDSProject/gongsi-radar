@@ -45,7 +45,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 테스트마다 트랜잭션을 롤백한다(gongsi_app 계정에는 DELETE 권한이 없어 지울 수 없다).
  * 감사 로그는 별도 커넥션(gongsi_audit)으로 쓰므로 롤백되지 않고 남는다 — append-only라 그게 맞다.
  */
-@SpringBootTest
+// 공용 로컬 DB의 적재 데이터(실데이터 수집 여부)에 결과가 흔들리지 않게 원천(샘플)만 읽는다
+@SpringBootTest(properties = "gongsi.data.ingested-read=false")
 @AutoConfigureMockMvc
 @Transactional
 class WorkflowTest {

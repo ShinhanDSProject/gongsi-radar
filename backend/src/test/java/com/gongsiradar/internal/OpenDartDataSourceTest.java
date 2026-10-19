@@ -2,6 +2,7 @@ package com.gongsiradar.internal;
 
 import com.gongsiradar.data.source.DataSourceException;
 import com.gongsiradar.data.source.OpenDartDataSource;
+import com.gongsiradar.data.source.SourceUnavailableException;
 import com.gongsiradar.data.client.SourceHttp;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -90,5 +91,33 @@ class OpenDartDataSourceTest {
     void 키가_없으면_시작하지_않는다(@TempDir Path dir) {
         assertThatThrownBy(() -> new OpenDartDataSource("", null, dir, null, new FakeHttp(), CLOCK, Duration.ZERO))
                 .hasMessageContaining("OPENDART_API_KEY");
+    }
+    @Test
+    void 연결이_연속으로_끊기면_호출을_멈추고_바로_실패한다(@TempDir Path dir) {
+        FakeHttp http = new FakeHttp();   // body == null → 매번 연결 실패
+        OpenDartDataSource src = new OpenDartDataSource("k", null, dir, null, http, CLOCK, Duration.ZERO,
+                Duration.ZERO, Duration.ofMinutes(5));
+        assertThatThrownBy(() -> src.governance("00999001", 2025, "11011"))
+                .isInstanceOf(SourceUnavailableException.class).hasMessageContaining("호출 실패").hasMessageContaining("멈");
+        int tried = http.urls.size();
+        assertThat(tried).isEqualTo(3);   // 한 요청 안의 재시도 3번이 모두 끊겨 멈춤 상태로 들어간다
+        // 멈춘 동안은 HTTP를 부르지 않고 바로 실패한다 — 화면이 오래 기다리지 않는다
+        http.body = "{\"status\":\"000\",\"list\":[]}";
+        assertThatThrownBy(() -> src.financials("00999001", 2025, "11011")).isInstanceOf(SourceUnavailableException.class);
+        assertThat(http.urls).hasSize(tried);
+    }
+
+    @Test
+    void 호출_사이에_최소_간격을_둔다(@TempDir Path dir) {
+        FakeHttp http = new FakeHttp();
+        http.body = "{\"status\":\"013\",\"message\":\"조회된 데이타가 없습니다.\"}";   // 013은 캐시하지 않아 매번 부른다
+        OpenDartDataSource src = new OpenDartDataSource("k", null, dir, null, http, CLOCK, Duration.ZERO,
+                Duration.ofMillis(60), Duration.ofMinutes(5));
+        long t0 = System.nanoTime();
+        for (int i = 0; i < 3; i++) {
+            assertThatThrownBy(() -> src.financials("00999001", 2025, "11011")).hasMessageContaining("013");
+        }
+        assertThat(http.urls).hasSize(6);   // 요청마다 CFS·OFS
+        assertThat(Duration.ofNanos(System.nanoTime() - t0)).isGreaterThanOrEqualTo(Duration.ofMillis(300));   // 간격 5번
     }
 }

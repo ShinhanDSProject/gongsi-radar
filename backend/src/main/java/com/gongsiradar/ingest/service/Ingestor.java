@@ -4,6 +4,7 @@ import com.gongsiradar.ingest.repository.IngestStore;
 
 import com.gongsiradar.data.support.Dart;
 import com.gongsiradar.data.source.DataSourceException;
+import com.gongsiradar.data.source.SourceUnavailableException;
 import com.gongsiradar.data.source.IngestedDataSource;
 import com.gongsiradar.data.source.RadarSource;
 import com.gongsiradar.data.support.Rows;
@@ -180,6 +181,7 @@ public class Ingestor {
             report.steps().add(new StepResult("all", "SKIPPED", err));
             return report;
         }
+        boolean sourceDown = false;
         for (String step : STEPS) {
             if (!steps.contains(step) || ("documents".equals(step) && !documents)) continue;
             StepResult res = new StepResult(step);
@@ -205,6 +207,13 @@ public class Ingestor {
             } catch (KillSwitchOn e) {
                 res.status = "SKIPPED";
                 res.error = "Kill Switch: " + e.getMessage();
+            } catch (SourceUnavailableException e) {
+                // 원천 연결이 끊겼다. 남은 단계도 같은 원천을 부르므로 여기서 멈추고 다음 실행이 이어서 한다
+                log.warn("원천 연결 실패로 수집 중단: {} — {}", step, e.getMessage());
+                res.status = "PARTIAL";
+                res.remaining = res.remaining != 0 ? res.remaining : -1;
+                res.error = e.getMessage();
+                sourceDown = true;
             } catch (Exception e) {   // 한 단계 실패가 다른 단계를 막지 않는다
                 log.error("수집 단계 실패: {}", step, e);
                 res.status = "FAILED";
@@ -214,7 +223,7 @@ public class Ingestor {
             store.finishRun(rid, res.status, res.calls, res.rows, Math.max(res.remaining, 0), res.error, now.get());
             report.steps().add(res);
             onStep.accept(res);
-            if ("SKIPPED".equals(res.status)) break;
+            if ("SKIPPED".equals(res.status) || sourceDown) break;
         }
         return report;
     }
@@ -269,6 +278,8 @@ public class Ingestor {
                 List<Map<String, Object>> lst;
                 try {
                     lst = src.filings(todo.get(k));
+                } catch (SourceUnavailableException e) {
+                    throw e;   // 연결 실패를 '데이터 없음'처럼 넘기지 않는다
                 } catch (DataSourceException e) {
                     continue;
                 }
@@ -383,6 +394,8 @@ public class Ingestor {
             try {
                 if (year == null || reprt == null) throw new DataSourceException("보고서 종류를 알 수 없음");
                 fin = src.financials(corp, year, reprt);
+            } catch (SourceUnavailableException e) {
+                throw e;   // 연결 실패를 '데이터 없음'처럼 넘기지 않는다
             } catch (DataSourceException e) {
                 String dt = Rows.str(f, "rcept_dt");
                 LocalDate filed = LocalDate.parse(dt, YMD);
@@ -433,7 +446,14 @@ public class Ingestor {
                 break;
             }
             String corp = Rows.str(todo.get(k), "corp_code");
-            String code = src.indutyCode(corp);
+            String code;
+            try {
+                code = src.indutyCode(corp);
+            } catch (SourceUnavailableException e) {
+                throw e;
+            } catch (DataSourceException e) {   // 이 회사만 실패. '확인함'으로 표시하지 않아 다음 실행이 다시 본다
+                continue;
+            }
             store.jdbc().update("UPDATE " + IngestStore.COMPANY + " SET induty_code = ?, induty_checked = ? WHERE corp_code = ?",
                     code, today, corp);
             n++;
@@ -456,6 +476,8 @@ public class Ingestor {
             }
             try {
                 src.document(todo.get(k));
+            } catch (SourceUnavailableException e) {
+                throw e;   // 연결 실패를 '데이터 없음'처럼 넘기지 않는다
             } catch (DataSourceException e) {
                 continue;
             }

@@ -18,7 +18,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /** 내부 데이터 API(CONTRACT §11.2). 샘플 원천 + 적재 DB(MariaDB 3307)를 그대로 읽는다. */
-@SpringBootTest
+// 공용 로컬 DB의 적재 데이터(실데이터 수집 여부)에 결과가 흔들리지 않게 원천(샘플)만 읽는다
+@SpringBootTest(properties = "gongsi.data.ingested-read=false")
 @AutoConfigureMockMvc
 class InternalDataApiTest {
 

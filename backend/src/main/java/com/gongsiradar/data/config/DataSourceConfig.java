@@ -49,11 +49,13 @@ public class DataSourceConfig {
             @Value("${gongsi.data.opendart-api-key:}") String dartKey,
             @Value("${gongsi.data.data-go-kr-api-key:}") String goKey,
             @Value("${gongsi.data.peers-file:}") String peersFile,
+            @Value("${gongsi.data.opendart-min-interval-ms:300}") long minIntervalMs,
+            @Value("${gongsi.data.opendart-cooldown-sec:300}") long cooldownSec,
             Clock clock) {
         if ("opendart".equalsIgnoreCase(mode)) {
             log.info("데이터 소스: OpenDART (캐시 {})", Path.of(cacheDir).toAbsolutePath().normalize());
             return new OpenDartDataSource(dartKey, goKey, Path.of(cacheDir), peersFile.isBlank() ? null : Path.of(peersFile),
-                    SourceHttp.jdk(), clock, Duration.ofSeconds(1));
+                    SourceHttp.jdk(), clock, Duration.ofSeconds(1), Duration.ofMillis(minIntervalMs), Duration.ofSeconds(cooldownSec));
         }
         if (!"sample".equalsIgnoreCase(mode)) {
             throw new IllegalStateException("gongsi.data.source는 sample 또는 opendart: " + mode);

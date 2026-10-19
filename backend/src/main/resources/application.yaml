@@ -59,6 +59,9 @@ gongsi:
     # [보안] 원천 API 키는 Spring에만 둔다. AI 서버는 키 없이 아래 내부 데이터 API로만 받는다
     opendart-api-key: ${OPENDART_API_KEY:}
     data-go-kr-api-key: ${DATA_GO_KR_API_KEY:}     # 공공데이터포털 '디코딩' 키
+    # OpenDART 호출 관리. 짧은 시간에 몰리면 OpenDART가 IP 연결을 끊는다(실측 약 1,000회 연속 호출 후 차단)
+    opendart-min-interval-ms: ${OPENDART_MIN_INTERVAL_MS:300}   # 실제 호출 사이 최소 간격(초당 약 3회)
+    opendart-cooldown-sec: ${OPENDART_COOLDOWN_SEC:300}         # 연결 실패 3연속이면 이 시간 동안 호출을 멈추고 바로 실패
     peers-file: ${GONGSI_PEERS_FILE:}               # OpenDART 업종 피어 고유번호 목록(JSON 배열). 비우면 피어 없음
     # 적재 DB(#3)를 먼저 읽고 없으면 원천을 부른다. false면 항상 원천
     ingested-read: true

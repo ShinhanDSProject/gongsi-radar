@@ -4,6 +4,7 @@ import com.gongsiradar.ai.client.AiClient;
 import com.gongsiradar.common.exception.ApiException;
 import com.gongsiradar.common.exception.ErrorCode;
 import com.gongsiradar.data.source.DataSourceException;
+import com.gongsiradar.data.source.SourceUnavailableException;
 import com.gongsiradar.data.source.RadarSource;
 import com.gongsiradar.data.support.Rows;
 import com.gongsiradar.finance.Valuations;
@@ -259,11 +260,18 @@ public class CompanyService {
         } catch (DataSourceException e) {
             filings = List.of();
             notes.add("공시 목록 조회 실패: " + e.getMessage());
+            if (e instanceof SourceUnavailableException) {
+                // 원천이 막혀 있으면 재무·AI 분석도 같은 원천을 불러 실패한다. 기다리지 않고 지금 아는 것만 돌려준다
+                return unavailableProfile(company, notes, includeValuation);
+            }
         }
 
         Valuations.Inputs vi = Valuations.gather(source, c, asOf);
         Map<String, Object> fin = financialTable(vi.annual());
-        if (vi.annual() == null) {
+        boolean unavailable = Valuations.sourceUnavailable(vi.notes());
+        if (unavailable) {
+            vi.notes().stream().filter(n -> n.startsWith(Valuations.UNAVAILABLE_NOTE)).findFirst().ifPresent(notes::add);
+        } else if (vi.annual() == null) {
             notes.add("사업보고서 재무 데이터가 없어 재무 표를 만들지 못함");
         }
 
@@ -272,7 +280,8 @@ public class CompanyService {
         if (includeValuation) {
             valuation = Valuations.fromInputs(vi);
             if (valuation == null) {
-                valuationNote = "연간 재무 데이터가 없어 시장 지표를 계산하지 않음";
+                valuationNote = unavailable ? "OpenDART에 연결하지 못해 시장 지표를 계산하지 못함(잠시 뒤 다시 시도하세요)"
+                        : "연간 재무 데이터가 없어 시장 지표를 계산하지 않음";
             }
         } else {
             valuationNote = NO_MARKET_SCOPE_NOTE;
@@ -309,5 +318,14 @@ public class CompanyService {
         return Rows.m("company", company, "filings", filingRows, "financials", fin, "valuation", valuation,
                 "valuationNote", valuation == null ? valuationNote : null,
                 "business", business, "governance", governance, "notes", notes);
+    }
+
+    /** 원천 연결이 끊겼을 때의 상세. 회사 정보와 사유만 담고, 재무·시장 지표·AI 분석은 부르지 않는다. */
+    private Map<String, Object> unavailableProfile(Map<String, Object> company, List<String> notes, boolean includeValuation) {
+        notes.add("재무·시장 지표·사업 지표·지배구조는 OpenDART 연결이 돌아오면 다시 불러옵니다.");
+        return Rows.m("company", company, "filings", List.of(), "financials", financialTable(null), "valuation", null,
+                "valuationNote", includeValuation ? "OpenDART에 연결하지 못해 시장 지표를 계산하지 못함(잠시 뒤 다시 시도하세요)"
+                        : NO_MARKET_SCOPE_NOTE,
+                "business", null, "governance", null, "notes", notes);
     }
 }

@@ -23,7 +23,10 @@ import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -31,6 +34,7 @@ import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -43,7 +47,15 @@ import java.util.zip.ZipInputStream;
  * 오류 코드 013(데이터 없음)도 HTTP 200으로 오므로 본문의 status를 항상 검사한다 — 000만 캐시하고,
  * 013은 캐시하지 않으며(나중에 생길 수 있음), 020(일 한도 초과)과 그 밖의 코드는 예외로 올린다.
  * <p>
- * 파이썬 {@code OpenDartSource}를 그대로 옮겼다. 호출 경로·파라미터는 문서대로 맞췄지만 <b>실키로 검증하지 않았다</b>.
+ * 파이썬 {@code OpenDartSource}를 그대로 옮겼다. 2026-10-19 실키로 전 구간 검증(#1).
+ * <p>
+ * [호출 관리] 짧은 시간에 호출이 몰리면 OpenDART가 이 IP의 연결을 끊는다(실측: 쉬지 않고 약 1,000회 호출한 뒤
+ * {@code header parser received no bytes}로 모든 연결이 끊김). 그래서
+ * <ul>
+ *   <li>실제 호출 사이에 최소 간격({@code gongsi.data.opendart-min-interval-ms})을 둔다 — 같은 프로세스 안의 모든 호출이 줄을 선다</li>
+ *   <li>연결 실패가 연속 {@value #FAILURE_THRESHOLD}번이면 {@code gongsi.data.opendart-cooldown-sec} 동안 호출을 멈추고
+ *       {@link SourceUnavailableException}으로 바로 실패한다 — 화면은 오래 기다리지 않고 사유를 보여 주고, 수집은 단계를 멈춘다</li>
+ * </ul>
  */
 public class OpenDartDataSource implements RadarSource {
 
@@ -63,9 +75,23 @@ public class OpenDartDataSource implements RadarSource {
     private final DataGoKrClient market;
     /** 재시도 사이 대기(테스트에서 0으로) */
     private final Duration retryWait;
+    static final int FAILURE_THRESHOLD = 3;
+    /** 실제 호출 사이 최소 간격(나노초). 0이면 간격 없음 */
+    private final long minIntervalNanos;
+    private final Duration cooldown;
+    private long nextCallAt = 0;
+    private final AtomicInteger consecutiveFailures = new AtomicInteger();
+    private volatile long blockedUntil = 0;   // epoch millis(clock 기준)
 
     public OpenDartDataSource(String apiKey, String dataGoKrKey, Path cacheRoot, Path peersFile, SourceHttp http,
                               Clock clock, Duration retryWait) {
+        this(apiKey, dataGoKrKey, cacheRoot, peersFile, http, clock, retryWait, Duration.ZERO, Duration.ofMinutes(5));
+    }
+
+    public OpenDartDataSource(String apiKey, String dataGoKrKey, Path cacheRoot, Path peersFile, SourceHttp http,
+                              Clock clock, Duration retryWait, Duration minInterval, Duration cooldown) {
+        this.minIntervalNanos = minInterval.toNanos();
+        this.cooldown = cooldown;
         if (apiKey == null || apiKey.isBlank()) {
             throw new DataSourceException("OPENDART_API_KEY가 없습니다. 서버 환경변수로 설정하세요(키는 1개만, 제3자 공유 금지).");
         }
@@ -102,13 +128,11 @@ public class OpenDartDataSource implements RadarSource {
     /** 실제 호출. 마감 시즌 지연·SSL 오류에 대비해 세 번까지(2초·4초 대기) 시도한다. */
     private byte[] get(String endpoint, Map<String, Object> params) {
         calls.incrementAndGet();
-        Map<String, Object> p = new LinkedHashMap<>();
-        p.put("crtfc_key", key);
-        p.putAll(params);
+        Map<String, Object> p = withKey(params);
         IOException last = null;
         for (int attempt = 0; attempt < 3; attempt++) {
             try {
-                return http.get(BASE + "/" + endpoint, p, Duration.ofSeconds(60));
+                return transport(endpoint, p);
             } catch (IOException e) {
                 last = e;
                 if (attempt < 2) sleep(retryWait.multipliedBy(2L * (attempt + 1)));
@@ -119,19 +143,66 @@ public class OpenDartDataSource implements RadarSource {
 
     private Map<String, Object> getJson(String endpoint, Map<String, Object> params) {
         calls.incrementAndGet();
-        Map<String, Object> p = new LinkedHashMap<>();
-        p.put("crtfc_key", key);
-        p.putAll(params);
+        Map<String, Object> p = withKey(params);
         Exception last = null;
         for (int attempt = 0; attempt < 3; attempt++) {
             try {
-                return JSON.readValue(http.get(BASE + "/" + endpoint, p, Duration.ofSeconds(60)), MAP);
+                return JSON.readValue(transport(endpoint, p), MAP);
             } catch (IOException e) {   // JSON이 아닌 응답도 여기로 온다(파이썬 ValueError와 같다)
                 last = e;
                 if (attempt < 2) sleep(retryWait.multipliedBy(2L * (attempt + 1)));
             }
         }
         throw new DataSourceException("OpenDART " + endpoint + " 호출 실패: " + last.getMessage(), last);
+    }
+
+    private Map<String, Object> withKey(Map<String, Object> params) {
+        Map<String, Object> p = new LinkedHashMap<>();
+        p.put("crtfc_key", key);
+        p.putAll(params);
+        return p;
+    }
+
+    /**
+     * HTTP 한 번. 멈춤 상태면 바로 실패하고, 아니면 최소 간격을 지킨 뒤 부른다. 연결 실패가 연속
+     * {@value #FAILURE_THRESHOLD}번이면 일정 시간 멈춤 상태로 들어간다.
+     */
+    private byte[] transport(String endpoint, Map<String, Object> p) throws IOException {
+        long until = blockedUntil;
+        if (until > clock.millis()) {
+            throw new SourceUnavailableException("OpenDART " + endpoint + " 호출 실패: 연결이 계속 끊겨 "
+                    + hhmm(until) + "까지 호출을 멈췄습니다(잠시 뒤 다시 시도하세요)");
+        }
+        pace();
+        try {
+            byte[] body = http.get(BASE + "/" + endpoint, p, Duration.ofSeconds(60));
+            consecutiveFailures.set(0);
+            return body;
+        } catch (IOException e) {
+            if (consecutiveFailures.incrementAndGet() >= FAILURE_THRESHOLD) {
+                blockedUntil = clock.millis() + cooldown.toMillis();
+                consecutiveFailures.set(0);
+                throw new SourceUnavailableException("OpenDART " + endpoint + " 호출 실패: 연결이 연속 "
+                        + FAILURE_THRESHOLD + "번 끊겨 " + hhmm(blockedUntil) + "까지 호출을 멈춥니다(" + e.getMessage() + ")", e);
+            }
+            throw e;
+        }
+    }
+
+    /** 같은 프로세스 안의 호출이 최소 간격을 두고 차례로 나가게 한다. */
+    private synchronized void pace() {
+        if (minIntervalNanos <= 0) return;
+        long now = System.nanoTime();
+        long wait = nextCallAt - now;
+        if (wait > 0) {
+            sleep(Duration.ofNanos(wait));
+            now = System.nanoTime();
+        }
+        nextCallAt = now + minIntervalNanos;
+    }
+
+    private String hhmm(long epochMillis) {
+        return LocalTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneId.of("Asia/Seoul")).withNano(0).toString();
     }
 
     private static void sleep(Duration d) {
@@ -455,11 +526,8 @@ public class OpenDartDataSource implements RadarSource {
     @Override
     public String indutyCode(String corpCode) {
         Map<String, Object> d;
-        try {
-            d = cachedJson("company_" + corpCode, "company.json", Rows.m("corp_code", corpCode));
-        } catch (DataSourceException e) {
-            return null;
-        }
+        // 호출 실패는 그대로 올린다 — null(업종 없음)로 바꾸면 수집이 '확인함'으로 표시해 90일 동안 다시 보지 않는다
+        d = cachedJson("company_" + corpCode, "company.json", Rows.m("corp_code", corpCode));
         return "000".equals(d.get("status")) ? Rows.orNull(Rows.str(d, "induty_code")) : null;
     }
 }

@@ -2,6 +2,7 @@ package com.gongsiradar.finance;
 
 import com.gongsiradar.data.support.Dart;
 import com.gongsiradar.data.source.DataSourceException;
+import com.gongsiradar.data.source.SourceUnavailableException;
 import com.gongsiradar.data.source.RadarSource;
 import com.gongsiradar.data.support.Rows;
 
@@ -121,6 +122,13 @@ public final class Valuations {
 
     // ───────────────────────── 수집 ─────────────────────────
 
+    /** 원천에 연결하지 못해 재무를 받지 못했을 때 notes 앞머리. 화면은 이것으로 '데이터 없음'과 '연결 실패'를 가른다 */
+    public static final String UNAVAILABLE_NOTE = "OpenDART에 연결하지 못해 재무를 받지 못함: ";
+
+    public static boolean sourceUnavailable(List<String> notes) {
+        return notes.stream().anyMatch(n -> n.startsWith(UNAVAILABLE_NOTE));
+    }
+
     /** 최근 연간 재무, 그다음 해 최근 중간 재무, 시세. 실패는 notes로 남긴다. */
     public static Inputs gather(RadarSource source, Map<String, Object> company, LocalDate asOf) {
         String corp = Rows.str(company, "corp_code");
@@ -130,6 +138,9 @@ public final class Valuations {
             RadarSource.Financials f;
             try {
                 f = source.financials(corp, y, "11011");
+            } catch (SourceUnavailableException e) {   // 연결 실패는 '그해 재무 없음'이 아니다. 더 거슬러 올라가 봐야 똑같다
+                notes.add(UNAVAILABLE_NOTE + e.getMessage());
+                break;
             } catch (DataSourceException e) {
                 continue;
             }
@@ -158,7 +169,7 @@ public final class Valuations {
                 interim = new Period(annual.year() + 1, code, f.rows(), f.fsDiv(), rno == null ? "" : rno);
                 break;
             }
-        } else {
+        } else if (!sourceUnavailable(notes)) {
             notes.add("기준일 이전 사업보고서 재무 데이터를 찾지 못함");
         }
         String ymd = asOf.format(DateTimeFormatter.BASIC_ISO_DATE);

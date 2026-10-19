@@ -1,5 +1,6 @@
 package com.gongsiradar.data.source;
 
+import com.gongsiradar.data.support.Dart;
 import com.gongsiradar.data.support.Rows;
 
 import lombok.extern.slf4j.Slf4j;
@@ -94,9 +95,40 @@ public class IngestedDataSource implements RadarSource {
         return base.lawsuits(corpCode, bgn, end);
     }
 
+    /**
+     * 회사 정기공시 목록. 적재된 공시에 사업보고서가 있으면 적재 DB만으로 답한다(원천 호출 없음).
+     * 적재가 덜 됐으면(일일 수집은 최근 공시만 받는다) 원천을 부르고, 원천이 실패하면 적재된 만큼이라도 돌려준다.
+     */
     @Override
     public List<Map<String, Object>> filings(String corpCode) {
-        return base.filings(corpCode);
+        List<Map<String, Object>> stored = storedFilings(corpCode);
+        boolean hasAnnual = stored.stream().anyMatch(r -> "11011".equals(Rows.str(r, "reprt_code")));
+        if (hasAnnual) {
+            return stored;
+        }
+        try {
+            return base.filings(corpCode);
+        } catch (DataSourceException e) {
+            if (!stored.isEmpty()) {
+                log.info("원천 공시 목록 실패({}) — 적재된 {}건으로 답함: {}", e.getClass().getSimpleName(), stored.size(), corpCode);
+                return stored;
+            }
+            throw e;
+        }
+    }
+
+    private List<Map<String, Object>> storedFilings(String corpCode) {
+        boolean docAvailable = "opendart".equals(base.name());   // OpenDART는 원문을 언제든 받을 수 있다
+        List<Map<String, Object>> out = new ArrayList<>();
+        for (Map<String, Object> r : rows("SELECT rcept_no, corp_code, corp_name, stock_code, report_nm, rcept_dt, rm, has_document"
+                + " FROM ingest_filing WHERE corp_code = ? ORDER BY rcept_dt DESC, rcept_no DESC", corpCode)) {
+            Map<String, Object> raw = Rows.m("rcept_no", r.get("rcept_no"), "corp_code", r.get("corp_code"),
+                    "corp_name", r.get("corp_name"), "stock_code", r.get("stock_code"), "report_nm", r.get("report_nm"),
+                    "rcept_dt", r.get("rcept_dt"), "rm", r.get("rm"));
+            Map<String, Object> row = Dart.filingRow(raw, docAvailable || Rows.truthy(r.get("has_document")));
+            if (row != null) out.add(row);
+        }
+        return out;
     }
 
     @Override

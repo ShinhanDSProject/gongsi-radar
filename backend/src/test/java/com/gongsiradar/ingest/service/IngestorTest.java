@@ -8,6 +8,7 @@ import com.gongsiradar.data.config.DataSourceConfig;
 import com.gongsiradar.data.source.IngestedDataSource;
 import com.gongsiradar.data.source.RadarSource;
 import com.gongsiradar.data.source.SampleDataSource;
+import com.gongsiradar.data.source.SourceUnavailableException;
 import com.gongsiradar.market.service.MarketOverviewService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
@@ -24,6 +25,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -234,5 +236,37 @@ class IngestorTest {
                 "market", "KOSDAQ")), TODAY);
         assertThat(new IngestedDataSource(sample(), ds, CLOCK).newListings(30))
                 .extracting(r -> r.get("corp_name")).containsExactly("새상장(가상)");
+    }
+    @Test
+    void 원천_연결이_끊기면_단계를_멈추고_업종을_확인함으로_남기지_않는다() {
+        DataSource ds = db();
+        IngestStore store = new IngestStore(ds);
+        int[] n = {0};
+        SampleDataSource flaky = new SampleDataSource(DataSourceConfig.resolveSampleDir("../samples/data")) {
+            @Override
+            public List<Map<String, Object>> companies() {   // 실데이터처럼 목록에는 업종이 없다 → 업종 단계가 회사마다 부른다
+                List<Map<String, Object>> out = new ArrayList<>();
+                for (Map<String, Object> c : super.companies()) {
+                    Map<String, Object> m = new HashMap<>(c);
+                    m.remove("induty_code");
+                    out.add(m);
+                }
+                return out;
+            }
+
+            @Override
+            public String indutyCode(String corpCode) {
+                if (++n[0] > 5) throw new SourceUnavailableException("OpenDART company.json 호출 실패: 연결이 계속 끊김");
+                return super.indutyCode(corpCode);
+            }
+        };
+        Ingestor.RunReport rep = ingestor(flaky, store, 15_000, TODAY).run("daily");
+        Map<String, String> st = statuses(rep);
+        assertThat(st.get("induty")).isEqualTo("PARTIAL");
+        assertThat(st).doesNotContainKey("documents");   // 같은 원천을 부르는 다음 단계는 돌리지 않는다
+        Integer checked = new JdbcTemplate(ds).queryForObject(
+                "SELECT COUNT(*) FROM ingest_company WHERE induty_checked IS NOT NULL", Integer.class);
+        assertThat(checked).isEqualTo(5);   // 실패한 회사는 다음 실행이 다시 본다
+        assertThat(store.recentRuns(1).get(0).get("status")).isEqualTo("PARTIAL");
     }
 }
