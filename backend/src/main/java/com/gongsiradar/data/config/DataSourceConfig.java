@@ -49,7 +49,7 @@ public class DataSourceConfig {
             @Value("${gongsi.data.opendart-api-key:}") String dartKey,
             @Value("${gongsi.data.data-go-kr-api-key:}") String goKey,
             @Value("${gongsi.data.peers-file:}") String peersFile,
-            @Value("${gongsi.data.opendart-min-interval-ms:300}") long minIntervalMs,
+            @Value("${gongsi.data.opendart-min-interval-ms:700}") long minIntervalMs,
             @Value("${gongsi.data.opendart-cooldown-sec:300}") long cooldownSec,
             Clock clock) {
         if ("opendart".equalsIgnoreCase(mode)) {
