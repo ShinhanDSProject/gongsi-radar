@@ -1,0 +1,36 @@
+{
+  "name": "gongsi-radar",
+  "private": true,
+  "description": "공시레이더 — 서버 기동·관리 명령 모음. 실제 동작은 scripts/dev.sh·scripts/db.sh가 한다(npm 의존성 없음).",
+  "scripts": {
+    "setup": "npm run setup:core && npm run setup:ai && npm run setup:frontend",
+    "setup:core": "cd core-service && python3.12 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt && ([ -f .env ] || cp .env.example .env)",
+    "setup:ai": "cd ai-server && python3.12 -m venv .venv && .venv/bin/pip install -r requirements.txt && ([ -f .env ] || cp .env.example .env)",
+    "setup:frontend": "cd frontend && npm install",
+
+    "start": "scripts/dev.sh start",
+    "stop": "scripts/dev.sh stop",
+    "restart": "scripts/dev.sh stop; scripts/dev.sh start",
+    "status": "scripts/dev.sh status",
+
+    "db:up": "scripts/db.sh up",
+    "db:apply": "scripts/db.sh apply",
+    "db:down": "scripts/db.sh down",
+    "db:shell": "scripts/db.sh shell",
+
+    "logs": "tail -n 50 -f .tmp/logs/*.log",
+    "logs:core": "tail -n 100 -f .tmp/logs/core-service.log",
+    "logs:ai": "tail -n 100 -f .tmp/logs/ai-server.log",
+    "logs:backend": "tail -n 100 -f .tmp/logs/backend.log",
+    "logs:frontend": "tail -n 100 -f .tmp/logs/frontend.log",
+
+    "test": "npm run test:core && npm run test:ai && npm run test:backend && npm run build:frontend",
+    "test:core": "cd core-service && .venv/bin/python -m pytest -q",
+    "test:ai": "cd ai-server && .venv/bin/python -m pytest -q",
+    "test:backend": "cd backend && ./gradlew test",
+    "build:frontend": "cd frontend && npm run build",
+
+    "ingest:daily": "cd backend && ./gradlew bootRun --args='--gongsi.ingest.run-once=daily'",
+    "ingest:backfill": "cd backend && ./gradlew bootRun --args='--gongsi.ingest.run-once=backfill'"
+  }
+}

@@ -158,6 +158,17 @@ scripts/dev.sh stop      # 전부 내린다(gradle이 띄운 JVM까지)
 scripts/db.sh down       # MariaDB 컨테이너 정지(데이터는 남는다. 다음엔 scripts/db.sh up)
 ```
 
+같은 명령을 루트 `package.json`의 npm 스크립트로도 쓸 수 있다(npm 의존성은 없다).
+
+| 명령 | 하는 일 |
+|---|---|
+| `npm run setup` | Core·AI 가상환경과 프런트 의존성 설치(처음 한 번) |
+| `npm start` · `npm stop` · `npm run restart` · `npm run status` | 서버 4개 기동·종료·재기동·상태 |
+| `npm run db:up` · `db:apply` · `db:down` · `db:shell` | MariaDB 컨테이너 |
+| `npm run logs` · `logs:backend` 등 | 로그 따라 보기(`core`·`ai`·`backend`·`frontend`) |
+| `npm test` · `test:core` · `test:ai` · `test:backend` · `build:frontend` | 테스트·빌드 |
+| `npm run ingest:daily` · `ingest:backfill` | 일일 수집 1회 실행 |
+
 - 브라우저: **http://localhost:3100**
 - 로그는 `.tmp/logs/{core-service,ai-server,backend,frontend}.log`. 이미 떠 있는 포트는 건너뛴다.
 - 서버를 하나씩 띄우고 싶으면(같은 순서로 터미널 4개):

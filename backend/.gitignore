@@ -41,3 +41,7 @@ out/
 
 ### 원천 API 응답 캐시(gongsi.data.cache-dir) ###
 .cache/
+
+### 로컬 비밀값(원천 API 키 등) ###
+.env
+.env.local
