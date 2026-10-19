@@ -696,3 +696,31 @@ export interface IngestStatus {
   runs: IngestRun[];
   steps: IngestStep[];
 }
+
+// ---- 용어집(#14) ----
+export type GlossaryStatus = "DRAFT" | "PENDING" | "PUBLISHED" | "REJECTED";
+export interface GlossaryTerm {
+  id: number;
+  term: string;
+  aliases: string[];
+  definition: string;
+  usageNote: string | null;
+  related: string[];
+  source: string | null;
+  status: GlossaryStatus;
+  aiDrafted: boolean;
+  createdBy: string;
+  submittedBy: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewComment: string | null;
+  updatedAt: string | null;
+}
+export interface GlossaryTermRequest {
+  term: string;
+  aliases: string[];
+  definition: string;
+  usageNote: string;
+  related: string[];
+  source: string;
+}

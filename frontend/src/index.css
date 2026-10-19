@@ -497,3 +497,23 @@
   .hero-v { font-size: 22px; }
   .mkt-filter { position: static; padding: 0; }
 }
+
+/* 용어 툴팁(#14). 점선 밑줄 + 마우스/키보드 초점에서 정의 카드 */
+@layer components {
+  .term { position: relative; border-bottom: 1px dotted var(--accent); cursor: help; outline: none; }
+  .term:focus-visible { box-shadow: 0 0 0 2px var(--accent-soft); border-radius: 2px; }
+  .term-pop {
+    display: none; position: absolute; z-index: 40; left: 0; top: calc(100% + 6px); width: min(320px, 80vw);
+    background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 10px;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.12); padding: 10px 12px; font-size: 13px; line-height: 1.55;
+    font-weight: 400; text-align: left; white-space: normal;
+  }
+  .term:hover .term-pop, .term:focus-within .term-pop { display: flex; flex-direction: column; gap: 4px; }
+  .term-title { font-size: 13.5px; }
+  .term-use, .term-rel { color: var(--muted); font-size: 12px; }
+  .term-link { color: var(--accent); font-size: 12px; align-self: flex-start; }
+  .gl-item { border-bottom: 1px solid var(--line); padding: 12px 0; }
+  .gl-item:last-child { border-bottom: 0; }
+  .gl-item h3 { font-size: 15px; font-weight: 700; }
+  .gl-meta { color: var(--muted); font-size: 12.5px; }
+}

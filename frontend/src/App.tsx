@@ -7,6 +7,7 @@ import AnalysisListPage from "./pages/AnalysisListPage";
 import ApprovalsPage from "./pages/ApprovalsPage";
 import CompanyDetailPage from "./pages/CompanyDetailPage";
 import CompanyListPage from "./pages/CompanyListPage";
+import GlossaryPage from "./pages/GlossaryPage";
 import LoginPage from "./pages/LoginPage";
 import MarketPage from "./pages/MarketPage";
 import PreviewPage from "./pages/PreviewPage";
@@ -41,6 +42,7 @@ export default function App() {
         <Route path="/companies/:corpCode" element={<CompanyDetailPage />} />
         {/* 시장 화면(§9). MARKET_DATA_READ가 없으면 서버가 403을 돌려주고 화면이 안내한다 */}
         <Route path="/market" element={<MarketPage />} />
+        <Route path="/glossary" element={<GlossaryPage />} />
         <Route path="/publications" element={<PublicationsPage />} />
         {/* 라우트는 열어 둔다. Junior가 URL을 쳐서 들어와도 서버가 403을 돌려주고,
             화면은 그 403을 그대로 보여 준다 — 막는 건 서버, 알리는 건 화면 */}

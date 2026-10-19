@@ -77,7 +77,8 @@ export const ERROR_MESSAGES: Record<string, string> = {
   CORE_PUBLICATION_REJECTED: "발행 원장(Core)이 요청을 거절했습니다.",
   CORE_UNAVAILABLE: "발행 원장(Core)에 연결할 수 없습니다.",
   REPORT_LOCKED: "발행 요청 이후에는 리포트를 수정할 수 없습니다.",
-  SELF_APPROVAL_FORBIDDEN: "자기가 요청한 발행은 승인할 수 없습니다. 다른 Senior가 승인해야 합니다.",
+  SELF_APPROVAL_FORBIDDEN: "자기가 요청한 건은 승인할 수 없습니다. 다른 Senior가 결정해야 합니다.",
+  GLOSSARY_CONFLICT: "이미 있는 용어이거나, 지금 상태에서는 할 수 없는 작업입니다.",
   NETWORK_ERROR: "서버에 연결할 수 없습니다. Spring Boot(8180)가 실행 중인지 확인하세요.",
   UNKNOWN: "요청이 실패했습니다.",
 };
@@ -203,6 +204,7 @@ export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: "POST", body: body === undefined ? undefined : JSON.stringify(body) }),
+  put: <T>(path: string, body: unknown) => request<T>(path, { method: "PUT", body: JSON.stringify(body) }),
 };
 
 // 목록 응답 모양이 엔드포인트마다 다를 수 있어(배열 / Page / Core식 {items,total}) 여기서 배열로 맞춘다.

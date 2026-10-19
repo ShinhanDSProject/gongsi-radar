@@ -4,6 +4,7 @@ import { describeError } from "../../api/client";
 import type { ChangeItem, DiffOp, RadarReport } from "../../api/types";
 import { bannedHits, TOPIC_KEY } from "../../lib/format";
 import { Checks, Cite, Edit, Empty, Topic, VPill } from "../ui";
+import GlossaryText from "../GlossaryText";
 
 const TOPICS = ["위험·소송", "거래", "사업·시장", "기타"];
 const EDITS = ["신설", "삭제", "표현 수정", "수치 수정"];
@@ -128,7 +129,7 @@ function ChangeRow({
           <Edit e={c.edit_type} />
           {inj && <span className="chip alert">지시문 의심</span>}
         </span>
-        <span className="chg-sum">{c.summary}</span>
+        <span className="chg-sum"><GlossaryText text={c.summary} /></span>
         <span className="chg-meta">
           <span className="chg-sect">{c.section_path}</span>
           {tags.map((f) => (

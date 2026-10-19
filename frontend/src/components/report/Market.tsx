@@ -5,6 +5,7 @@ import { dartUrl, fmtKRW, fmtNum, fmtYmd, REPRT_LABEL } from "../../lib/format";
 import { FormulaCard } from "../FormulaView";
 import LineChart from "../LineChart";
 import { Empty } from "../ui";
+import GlossaryText from "../GlossaryText";
 
 const MARKET_SOURCE: Record<string, string> = {
   sample: "시연용 샘플 시세",
@@ -16,7 +17,7 @@ export function MarketView({ valuation, note }: { valuation: Valuation | null | 
     return (
       <div className="stack">
         <Empty>시장 지표가 없습니다.</Empty>
-        {note && <p className="note">{note}</p>}
+        {note && <p className="note"><GlossaryText text={note} /></p>}
       </div>
     );
   }

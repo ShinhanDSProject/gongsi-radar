@@ -7,6 +7,7 @@ import { FormulaExpander, FormulaList } from "../FormulaView";
 import { Checks, Cite, Level, VPill } from "../ui";
 import { EditBox, type OnEdit } from "./Changes";
 import { YoyChart } from "./Overview";
+import GlossaryText from "../GlossaryText";
 
 function Quote({ text, sentence, clause }: { text: string; sentence?: string | null; clause?: string | null }) {
   const s = sentence || text;
@@ -57,7 +58,7 @@ export function Numbers({ rep, editable, onEdit }: { rep: RadarReport; editable:
                 ))}
               </p>
             )}
-            <p className="statement">{r.statement}</p>
+            <p className="statement"><GlossaryText text={r.statement} /></p>
             {r.statement_before_rewrite && <p className="note">재작성 전: “{r.statement_before_rewrite}”</p>}
             {r.evidence.map((e, i) => (
               <div className="evidence" key={e.pid}>

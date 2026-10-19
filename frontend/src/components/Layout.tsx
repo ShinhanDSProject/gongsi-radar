@@ -27,6 +27,7 @@ export default function Layout() {
             <NavLink to="/companies" className={linkClass}>기업</NavLink>
             <NavLink to="/market" className={linkClass}>시장</NavLink>
             <NavLink to="/publications" className={linkClass}>발행 원장</NavLink>
+            <NavLink to="/glossary" className={linkClass}>용어집</NavLink>
             {/* Senior에게만 보이는 메뉴 — 숨김이지 방어가 아니다. 방어는 서버 몫 */}
             {isSenior && <NavLink to="/approvals" className={linkClass}>결재함</NavLink>}
             {isSenior && <NavLink to="/admin" className={linkClass}>관리</NavLink>}

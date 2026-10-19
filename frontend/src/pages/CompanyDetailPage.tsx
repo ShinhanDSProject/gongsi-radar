@@ -9,6 +9,7 @@ import { GovernanceView } from "../components/report/Governance";
 import { MarketView } from "../components/report/Market";
 import { Empty, ErrorText, TabList } from "../components/ui";
 import { dartUrl, fmtKRW, fmtYmd, REPRT_LABEL } from "../lib/format";
+import GlossaryText from "../components/GlossaryText";
 
 type CTab = "overview" | "financials" | "market" | "governance" | "filings";
 const CTABS: CTab[] = ["overview", "financials", "market", "governance", "filings"];
@@ -67,7 +68,7 @@ export default function CompanyDetailPage() {
             {p.notes.length > 0 && (
               <ul className="note list-disc pl-6">
                 {p.notes.map((n, i) => (
-                  <li key={i}>{n}</li>
+                  <li key={i}><GlossaryText text={n} /></li>
                 ))}
               </ul>
             )}
@@ -110,7 +111,7 @@ function FinancialsTable({ fin }: { fin: Financials | null | undefined }) {
               return (
                 <Fragment key={`${r.account}-${i}`}>
                   <tr>
-                    <td>{r.account}</td>
+                    <td><GlossaryText text={r.account} /></td>
                     {fin.columns.map((c, ci) => (
                       <td key={c} className="r num" title={r.values[ci] == null ? "" : `${r.values[ci]!.toLocaleString("ko-KR")}원`}>
                         {fmtKRW(r.values[ci] ?? null)}

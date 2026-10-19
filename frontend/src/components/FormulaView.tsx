@@ -3,6 +3,7 @@
 import type { Formula, Source } from "../api/types";
 import { dartUrl, fmtUnit } from "../lib/format";
 import { Expander } from "./ui";
+import GlossaryText from "./GlossaryText";
 
 export function SourceChip({ s }: { s: Source | null | undefined }) {
   if (!s) return null;
@@ -31,7 +32,7 @@ export function FormulaCard({ f }: { f: Formula }) {
   return (
     <article className="fx" aria-label={`계산식 ${f.label}`}>
       <header className="fx-h">
-        <h4>{f.label}</h4>
+        <h4><GlossaryText text={f.label} /></h4>
         <span className={`pill ${done ? "v-good" : "v-warn"}`}>{f.status}</span>
         <span className="hint mono">{f.id}</span>
       </header>
