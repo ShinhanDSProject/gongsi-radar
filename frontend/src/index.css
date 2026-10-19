@@ -503,12 +503,14 @@
   .term { position: relative; border-bottom: 1px dotted var(--accent); cursor: help; outline: none; }
   .term:focus-visible { box-shadow: 0 0 0 2px var(--accent-soft); border-radius: 2px; }
   .term-pop {
-    display: none; position: absolute; z-index: 40; left: 0; top: calc(100% + 6px); width: min(320px, 80vw);
+    display: none; position: fixed; z-index: 60; width: min(320px, 80vw);
     background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 10px;
     box-shadow: 0 8px 24px rgb(0 0 0 / 0.12); padding: 10px 12px; font-size: 13px; line-height: 1.55;
     font-weight: 400; text-align: left; white-space: normal;
   }
   .term:hover .term-pop, .term:focus-within .term-pop { display: flex; flex-direction: column; gap: 4px; }
+  /* 글자와 툴팁 사이 6px 틈을 지나도 hover가 끊기지 않게 */
+  .term-pop::before { content: ""; position: absolute; left: 0; right: 0; top: -8px; bottom: -8px; z-index: -1; }
   .term-title { font-size: 13.5px; }
   .term-use, .term-rel { color: var(--muted); font-size: 12px; }
   .term-link { color: var(--accent); font-size: 12px; align-self: flex-start; }

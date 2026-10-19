@@ -22,6 +22,14 @@ const STATUS_CLASS: Record<GlossaryStatus, string> = {
   REJECTED: "r-back",
 };
 
+/** 검색 순서: 표제어·별칭이 정확히 같은 것 → 표제어·별칭에 들어 있는 것 → 정의에만 들어 있는 것. */
+function rank(t: GlossaryTerm, q: string): number {
+  const s = q.toLowerCase();
+  const names = [t.term, ...t.aliases].map((x) => x.toLowerCase());
+  if (names.includes(s)) return 0;
+  return names.some((x) => x.includes(s)) ? 1 : 2;
+}
+
 function matches(t: GlossaryTerm, q: string): boolean {
   if (!q) return true;
   const s = q.toLowerCase();
@@ -33,7 +41,7 @@ export default function GlossaryPage() {
   const q = params.get("q") ?? "";
   const published = useGlossary();
   const list = useMemo(
-    () => (published.data ?? []).filter((t) => matches(t, q)).sort((a, b) => a.term.localeCompare(b.term, "ko")),
+    () => (published.data ?? []).filter((t) => matches(t, q)).sort((a, b) => (q ? rank(a, q) - rank(b, q) : 0) || a.term.localeCompare(b.term, "ko")),
     [published.data, q],
   );
 
@@ -68,10 +76,10 @@ export default function GlossaryPage() {
               <p className="gl-meta">
                 관련:{" "}
                 {t.related.map((r, i) => (
-                  <button key={r} type="button" className="link" onClick={() => setParams({ q: r })}>
-                    {r}
-                    {i < t.related.length - 1 ? "," : ""}
-                  </button>
+                  <span key={r}>
+                    {i > 0 && ", "}
+                    <button type="button" className="link" onClick={() => setParams({ q: r })}>{r}</button>
+                  </span>
                 ))}
               </p>
             )}

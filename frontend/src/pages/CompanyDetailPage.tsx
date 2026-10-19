@@ -8,7 +8,7 @@ import { BusinessView } from "../components/report/Business";
 import { GovernanceView } from "../components/report/Governance";
 import { MarketView } from "../components/report/Market";
 import { Empty, ErrorText, TabList } from "../components/ui";
-import { dartUrl, fmtKRW, fmtYmd, REPRT_LABEL } from "../lib/format";
+import { dartUrl, fmtKRW, fmtRate, fmtYmd, REPRT_LABEL } from "../lib/format";
 import GlossaryText from "../components/GlossaryText";
 
 type CTab = "overview" | "financials" | "market" | "governance" | "filings";
@@ -108,13 +108,14 @@ function FinancialsTable({ fin }: { fin: Financials | null | undefined }) {
             {fin.rows.map((r, i) => {
               const isOpen = open === i;
               const n = r.formulas?.length ?? 0;
+              const pct = r.account.endsWith("(%)"); // 비율 행(영업이익률 등)은 원이 아니라 %로
               return (
                 <Fragment key={`${r.account}-${i}`}>
                   <tr>
                     <td><GlossaryText text={r.account} /></td>
                     {fin.columns.map((c, ci) => (
-                      <td key={c} className="r num" title={r.values[ci] == null ? "" : `${r.values[ci]!.toLocaleString("ko-KR")}원`}>
-                        {fmtKRW(r.values[ci] ?? null)}
+                      <td key={c} className="r num" title={r.values[ci] == null || pct ? "" : `${r.values[ci]!.toLocaleString("ko-KR")}원`}>
+                        {pct ? fmtRate(r.values[ci] ?? null) : fmtKRW(r.values[ci] ?? null)}
                       </td>
                     ))}
                     <td>
