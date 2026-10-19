@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 NAME=gongsi-mariadb
 SQL=(schema/01_schema schema/02_agent_schema schema/03_hitl_schema schema/04_governance_schema schema/05_llm_schema
-     schema/06_rag_schema schema/07_ingest_schema seed)
+     schema/06_rag_schema schema/07_ingest_schema schema/08_glossary_schema seed seed_glossary)
 
 apply() {
   for f in "${SQL[@]}"; do

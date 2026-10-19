@@ -278,6 +278,7 @@ cd ai-server
 | `05_llm_schema.sql` | LLM 호출 기록 |
 | `06_rag_schema.sql` | RAG 문서·청크 메타(벡터는 Chroma) |
 | `07_ingest_schema.sql` | 일일 수집 적재 테이블·`gongsi_ingest` 계정 |
+| `08_glossary_schema.sql`, `db/seed_glossary.sql` | 용어집(검토·게시 상태)과 초기 용어 37개 |
 
 | 계정 | 쓰는 곳 | 권한 |
 |---|---|---|
