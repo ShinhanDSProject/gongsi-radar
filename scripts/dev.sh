@@ -20,7 +20,9 @@ wait_port() {
 start_one() {
   local name=$1 dir=$2 port=$3; shift 3
   if nc -z localhost "$port" 2>/dev/null; then echo "  - $name :$port 이미 사용 중(건너뜀)"; return; fi
-  (cd "$ROOT/$dir" && nohup "$@" > "$LOG/$name.log" 2>&1 & echo $! > "$PIDS/$name.pid")
+  # 각 디렉터리의 .env.local(git 미추적)이 있으면 그 프로세스에만 환경변수로 넘긴다. 원천 API 키는 여기에 둔다
+  (cd "$ROOT/$dir" && { [ -f .env.local ] && { set -a; . ./.env.local; set +a; echo "  · $name: .env.local 적용"; }; true; } \
+    && nohup "$@" > "$LOG/$name.log" 2>&1 & echo $! > "$PIDS/$name.pid")
   wait_port "$port" "$name"
 }
 

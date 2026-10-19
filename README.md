@@ -200,6 +200,12 @@ scripts/db.sh down       # MariaDB 컨테이너 정지(데이터는 남는다. �
 ### 5. 설정 바꾸기
 
 **데이터(Spring, 백엔드 환경변수)** — `backend/src/main/resources/application.yaml` 기본값을 환경변수로 덮어쓴다.
+`backend/.env.example`을 `backend/.env.local`로 복사해 값을 채우면 `scripts/dev.sh start`가 백엔드를 띄울 때 읽는다(`.env.local`은 git에 올라가지 않는다).
+
+```bash
+cp backend/.env.example backend/.env.local   # GONGSI_DATA_SOURCE=opendart, OPENDART_API_KEY=… 채우기
+scripts/dev.sh stop && scripts/dev.sh start
+```
 
 | 하고 싶은 것 | 설정 | 비고 |
 |---|---|---|
