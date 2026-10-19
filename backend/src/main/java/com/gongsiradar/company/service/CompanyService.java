@@ -3,6 +3,7 @@ package com.gongsiradar.company.service;
 import com.gongsiradar.ai.client.AiClient;
 import com.gongsiradar.common.exception.ApiException;
 import com.gongsiradar.common.exception.ErrorCode;
+import com.gongsiradar.common.util.Ksic;
 import com.gongsiradar.data.source.DataSourceException;
 import com.gongsiradar.data.source.SourceUnavailableException;
 import com.gongsiradar.data.source.RadarSource;
@@ -98,9 +99,15 @@ public class CompanyService {
         return new Cap(cap, d.length() == 8 ? d.substring(0, 4) + "-" + d.substring(4, 6) + "-" + d.substring(6) : null);
     }
 
+    /** 업종 표시 이름. 원천이 준 설명(샘플)이 있으면 그것, 없으면 KSIC 코드를 이름으로 바꾼다(실데이터). */
+    static String indutyName(Map<String, Object> c) {
+        String given = Rows.str(c, "induty", "");
+        return given.isBlank() ? Ksic.name(Rows.str(c, "induty_code")) : given;
+    }
+
     private static Map<String, Object> baseRow(Map<String, Object> c) {
         return Rows.m("corpCode", c.get("corp_code"), "corpName", c.get("corp_name"),
-                "stockCode", Rows.str(c, "stock_code", ""), "induty", c.get("induty"), "hasFilings", false,
+                "stockCode", Rows.str(c, "stock_code", ""), "induty", indutyName(c), "hasFilings", false,
                 "revenue", null, "opIncome", null, "opMarginPct", null, "marketCap", null, "per", null, "pbr", null,
                 "basis", null);
     }
@@ -252,7 +259,7 @@ public class CompanyService {
         }
         String corp = Rows.str(c, "corp_code");
         Map<String, Object> company = Rows.m("corpCode", corp, "corpName", c.get("corp_name"),
-                "stockCode", Rows.str(c, "stock_code", ""), "induty", c.get("induty"));
+                "stockCode", Rows.str(c, "stock_code", ""), "induty", indutyName(c));
         List<String> notes = new ArrayList<>();
         List<Map<String, Object>> filings;
         try {
