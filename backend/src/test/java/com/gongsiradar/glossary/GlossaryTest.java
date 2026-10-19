@@ -3,6 +3,7 @@ package com.gongsiradar.glossary;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gongsiradar.ai.client.AiClient;
+import com.gongsiradar.ai.dto.GlossaryDraft;
 import com.gongsiradar.ai.dto.GuardrailCheckResult;
 import com.gongsiradar.auth.security.JwtProvider;
 import com.gongsiradar.core.client.CoreSystemClient;
@@ -23,6 +24,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -165,5 +168,25 @@ class GlossaryTest {
     void 초기_용어가_게시되어_있다() throws Exception {
         assertThat(publishedContains("TTM")).isTrue();
         assertThat(publishedContains("지배주주 순이익")).isTrue();
+    }
+
+    @Test
+    void AI_초안은_표시만_붙고_게시되지_않으며_mock이면_만들지_않는다() throws Exception {
+        String term = "테스트용어-" + UUID.randomUUID();
+        long id = create(junior(), term, "임시");
+        when(aiClient.glossaryDraft(anyString(), anyList(), any(), anyString()))
+                .thenReturn(new GlossaryDraft("주가를 주당순이익으로 나눈 값입니다.", "시장 지표 화면", false, "test"));
+        mvc.perform(post("/api/glossary/" + id + "/ai-draft").header("Authorization", junior()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("DRAFT"))
+                .andExpect(jsonPath("$.data.aiDrafted").value(true))
+                .andExpect(jsonPath("$.data.definition").value("주가를 주당순이익으로 나눈 값입니다."));
+        assertThat(publishedContains(term)).isFalse();
+
+        when(aiClient.glossaryDraft(anyString(), anyList(), any(), anyString()))
+                .thenReturn(new GlossaryDraft("[mock] 직접 작성해 주세요", null, true, "mock-model"));
+        mvc.perform(post("/api/glossary/" + id + "/ai-draft").header("Authorization", junior()))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.error.code").value("LLM_PROVIDER_ERROR"));
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gongsiradar.ai.dto.AiAnalysisRequest;
 import com.gongsiradar.ai.dto.AiJobStatus;
+import com.gongsiradar.ai.dto.GlossaryDraft;
 import com.gongsiradar.ai.dto.GuardrailCheckResult;
 import com.gongsiradar.common.exception.ApiException;
 import com.gongsiradar.common.exception.ErrorCode;
@@ -79,6 +80,23 @@ public class AiClient {
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(GuardrailCheckResult.class));
+    }
+
+    // ───────────────────────── 용어집 ─────────────────────────
+
+    /** 용어 정의 초안(#14). 입력·출력 가드레일은 AI 서버가 건다. 게시는 사람이 검토해야 한다. */
+    public GlossaryDraft glossaryDraft(String term, List<String> aliases, String context, String userId) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("term", term);
+        body.put("aliases", aliases);
+        body.put("context", context);
+        body.put("userId", userId);
+        return call(() -> aiWebClient.post()
+                .uri("/ai/glossary/draft")
+                .headers(h -> withUser(h, userId, null))
+                .bodyValue(body)
+                .retrieve()
+                .bodyToMono(GlossaryDraft.class));
     }
 
     // ───────────────────────── 기업 상세의 문서 파생 정보 ─────────────────────────

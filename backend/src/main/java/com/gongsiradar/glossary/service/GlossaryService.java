@@ -1,6 +1,7 @@
 package com.gongsiradar.glossary.service;
 
 import com.gongsiradar.ai.client.AiClient;
+import com.gongsiradar.ai.dto.GlossaryDraft;
 import com.gongsiradar.ai.dto.GuardrailCheckResult;
 import com.gongsiradar.audit.service.AuditService;
 import com.gongsiradar.common.exception.ApiException;
@@ -79,18 +80,31 @@ public class GlossaryService {
     }
 
     /** AI가 쓴 정의 초안을 넣는다. 게시는 여전히 사람 검토를 거친다. */
+    /**
+     * LLM이 정의 초안을 쓰고 ai_drafted 표시를 단다. 상태는 그대로(작성 중·반려) — 사람이 고치고 검토를 요청해야 게시된다.
+     * mock이면 초안을 쓰지 않고 그대로 돌려준다(정의를 지어내지 않는다).
+     */
     @Transactional
-    public GlossaryTermDto applyAiDraft(Long id, String userId, boolean senior, String definition) {
+    public GlossaryTermDto aiDraft(Long id, String userId, boolean senior) {
         GlossaryTerm t = find(id);
         if (!t.editable()) {
             throw new ApiException(ErrorCode.GLOSSARY_CONFLICT, "작성 중이거나 반려된 용어만 고칠 수 있습니다",
                     Map.of("status", t.getStatus()));
         }
         requireOwnerOrSenior(t, userId, senior);
-        t.edit(t.getTerm(), t.getAliases(), definition, t.getUsageNote(), t.getRelated(), t.getSource(), true);
-        auditService.record("GLOSSARY_AI_DRAFTED", userId, Map.of("termId", id, "term", t.getTerm()));
+        String context = t.getDefinition() == null || t.getDefinition().isBlank() ? null
+                : t.getDefinition().substring(0, Math.min(500, t.getDefinition().length()));
+        GlossaryDraft d = aiClient.glossaryDraft(t.getTerm(), GlossaryTermDto.split(t.getAliases()), context, userId);
+        if (d == null || d.mock() || d.definition() == null || d.definition().isBlank()) {
+            throw new ApiException(ErrorCode.LLM_PROVIDER_ERROR, "LLM이 mock 상태라 초안을 만들지 않았습니다. 직접 작성해 주세요",
+                    Map.of("mock", d != null && d.mock()));
+        }
+        String usage = d.usageNote() == null || d.usageNote().isBlank() ? t.getUsageNote() : d.usageNote();
+        t.edit(t.getTerm(), t.getAliases(), d.definition(), usage, t.getRelated(), t.getSource(), true);
+        auditService.record("GLOSSARY_AI_DRAFTED", userId, Map.of("termId", id, "term", t.getTerm(), "model", String.valueOf(d.model())));
         return GlossaryTermDto.of(t);
     }
+
 
     @Transactional
     public GlossaryTermDto submit(Long id, String userId, boolean senior) {

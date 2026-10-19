@@ -49,6 +49,12 @@ public class GlossaryController {
         return ApiResponse.success(service.update(id, userId, CurrentUser.isSenior(), req));
     }
 
+    /** LLM 정의 초안. 상태는 바뀌지 않고 ai_drafted 표시만 붙는다 — 게시는 검토를 거친다. */
+    @PostMapping("/{id}/ai-draft")
+    public ApiResponse<GlossaryTermDto> aiDraft(@AuthenticationPrincipal String userId, @PathVariable Long id) {
+        return ApiResponse.success(service.aiDraft(id, userId, CurrentUser.isSenior()));
+    }
+
     @PostMapping("/{id}/submit")
     public ApiResponse<GlossaryTermDto> submit(@AuthenticationPrincipal String userId, @PathVariable Long id) {
         return ApiResponse.success(service.submit(id, userId, CurrentUser.isSenior()));

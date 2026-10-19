@@ -17,7 +17,7 @@ public record GlossaryTermDto(
                 t.getSubmittedBy(), t.getReviewedBy(), t.getReviewedAt(), t.getReviewComment(), t.getUpdatedAt());
     }
 
-    static List<String> split(String csv) {
+    public static List<String> split(String csv) {
         if (csv == null || csv.isBlank()) return List.of();
         return Arrays.stream(csv.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
     }

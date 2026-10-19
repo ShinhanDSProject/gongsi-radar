@@ -119,6 +119,21 @@ PublicationDto = { publicationId, reportId, corpCode, corpName, periodLabel, tit
 - `GET /api/companies/{corpCode}` (`DISCLOSURE_READ`; 시장 지표는 `MARKET_DATA_READ`가 없으면 FastAPI가 `valuation: null` + 사유)
   → `CompanyProfile` (§6.3)
 
+### 3.5.1 용어집(#14)
+- `GET /api/glossary` → 게시(PUBLISHED)된 `GlossaryTerm[]`. 화면이 한 번 받아 캐시하고 용어 툴팁에 쓴다
+- `GET /api/glossary/manage?status=` → 모든 상태
+- `POST /api/glossary` · `PUT /api/glossary/{id}` `{term, aliases[], definition, usageNote?, related[], source?}` — 작성자 또는 Senior, DRAFT·REJECTED만
+- `POST /api/glossary/{id}/ai-draft` → LLM 정의 초안(`aiDrafted=true`, 상태 그대로). mock이면 502 `LLM_PROVIDER_ERROR`
+- `POST /api/glossary/{id}/submit` → PENDING (출력 가드레일 통과해야 함)
+- `POST /api/glossary/{id}/approve` `{comment?}` · `/reject` `{comment}`(필수) · `/unpublish` — Senior, 자기 요청은 승인 불가(`SELF_APPROVAL_FORBIDDEN`)
+- 같은 표제어 → 409 `GLOSSARY_CONFLICT`. 감사 type `GLOSSARY_*`
+
+```ts
+GlossaryTerm = { id, term, aliases: string[], definition, usageNote|null, related: string[], source|null,
+  status: "DRAFT"|"PENDING"|"PUBLISHED"|"REJECTED", aiDrafted, createdBy, submittedBy|null, reviewedBy|null,
+  reviewedAt|null, reviewComment|null, updatedAt }
+```
+
 ### 3.6 관리·감사 (Senior)
 - `GET|POST /api/admin/kill-switch` `{enabled, reason}` → `{killSwitchActive, reason, toggledBy, since}`
 - `GET /api/admin/guardrail-events?severity=&limit=50`
@@ -155,6 +170,7 @@ PublicationDto = { publicationId, reportId, corpCode, corpName, periodLabel, tit
 - `GET /ai/tools` (X-User-Scopes로 필터) · `POST /ai/tools/{name}/invoke` (헤더 `X-User-Id`, `X-User-Scopes`, `X-Agent-Id`; body=인자만) · `GET /ai/tools/calls/recent`
 - `GET /ai/agents` · `POST /ai/agents/{agentId}/run` `{query, scope}` · `GET /ai/agents/llm-calls/recent`
 - `GET /ai/insights/{corpCode}` (X-User-Scopes에 `DISCLOSURE_READ` 필요) → `{business, governance, notes}` — 기업 상세의 문서 파생 정보. Tool Gateway `get_document_insights`를 거친다. 403·404·502(데이터 서비스 장애)
+- `POST /ai/glossary/draft` `{term, aliases?, context?, userId}` → `{definition, usageNote|null, mock, model}` — 입력·출력 가드레일, Kill Switch 503. mock이면 정의를 짓지 않고 `mock:true`
 - (제거됨, §11) `/ai/companies`·`/ai/market`·`/ai/ingest` — 데이터 API는 Spring으로 옮겼다
 
 Tool 목록(이름·scope): `get_document_insights`(DISCLOSURE_READ),

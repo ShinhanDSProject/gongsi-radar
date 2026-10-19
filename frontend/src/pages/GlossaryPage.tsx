@@ -235,6 +235,9 @@ function Manage() {
               {canEdit && editing !== t.id && (
                 <>
                   <button type="button" className="btn ghost small" onClick={() => setEditing(t.id)}>고치기</button>
+                  <button type="button" className="btn ghost small" disabled={act.isPending}
+                    title="LLM이 정의 초안을 씁니다. 사람이 확인하고 검토를 요청해야 게시됩니다."
+                    onClick={() => run(() => api.post(`/api/glossary/${t.id}/ai-draft`))}>AI 초안</button>
                   <button type="button" className="btn small" disabled={act.isPending}
                     onClick={() => run(() => api.post(`/api/glossary/${t.id}/submit`))}>검토 요청</button>
                 </>
