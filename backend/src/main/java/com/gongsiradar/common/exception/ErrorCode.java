@@ -20,7 +20,8 @@ public enum ErrorCode {
     CORE_PUBLICATION_REJECTED(HttpStatus.CONFLICT, "CORE_PUBLICATION_REJECTED"),   // Core Zone 발행 원장이 거절
     CORE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "CORE_UNAVAILABLE"),
     REPORT_LOCKED(HttpStatus.CONFLICT, "REPORT_LOCKED"),                           // 발행 요청 이후 수정 불가
-    SELF_APPROVAL_FORBIDDEN(HttpStatus.FORBIDDEN, "SELF_APPROVAL_FORBIDDEN");      // 자기 요청 승인 불가
+    SELF_APPROVAL_FORBIDDEN(HttpStatus.FORBIDDEN, "SELF_APPROVAL_FORBIDDEN"),      // 자기 요청 승인 불가
+    GLOSSARY_CONFLICT(HttpStatus.CONFLICT, "GLOSSARY_CONFLICT");                    // 용어 중복·지금 상태에서 할 수 없는 작업
 
     private final HttpStatus status;
     private final String code;
