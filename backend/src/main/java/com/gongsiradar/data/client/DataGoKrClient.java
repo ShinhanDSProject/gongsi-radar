@@ -23,19 +23,22 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * 공공데이터포털 금융위원회 시세(파이썬 {@code DataGoKrMarket}·{@code DataGoKrIndex}).
  * <ul>
- *   <li>주식시세정보 getStockPriceInfo — 영업일 다음 날 오후에 전일 시세가 올라온다</li>
- *   <li>지수시세정보 getStockMarketIndex — idxNm=코스피·코스닥, 최대 5년치</li>
+ *   <li>주식시세정보 getStockPriceInfo_V2 — 영업일 다음 날 오후에 전일 시세가 올라온다</li>
+ *   <li>지수시세정보 getStockMarketIndex_V2 — idxNm=코스피·코스닥, 최대 5년치</li>
  * </ul>
  * 키가 없으면 빈 목록(시장 지표는 '계산 안 함'). 캐시 규칙은 파이썬과 같다 — 종목·지수는 그날 하루, 날짜별 전 종목은
- * 지난 날짜만 영구. 실키로 검증하지 않았다(샘플만 테스트).
+ * 지난 날짜만 영구. 2026-10-19 실키로 V2 주소 검증(시세·지수 필드명은 옛 버전과 같다).
  * <p>
  * [파이썬과 다른 점] 실제 HTTP 호출 수를 호출 카운터에 더한다(캐시 적중은 세지 않는다). 파이썬 OpenDartSource는
  * 시세 호출을 세지 않았지만 샘플 소스는 시세 파일 읽기를 셌다 — 수집 예산이 두 모드에서 같은 뜻이 되게 맞췄다.
  */
 public class DataGoKrClient {
 
-    static final String PRICE_URL = "https://apis.data.go.kr/1160100/service/GetStockSecuritiesInfoService/getStockPriceInfo";
-    static final String INDEX_URL = "https://apis.data.go.kr/1160100/service/GetMarketIndexInfoService/getStockMarketIndex";
+    // 2025년 이후 활용신청은 V2 서비스 권한만 준다(옛 주소는 HTTP 403). 바뀌면 환경변수로 덮어쓴다
+    static final String PRICE_URL = env("DATA_GO_KR_PRICE_URL",
+            "https://apis.data.go.kr/1160100/GetStockSecuritiesInfoService_V2/getStockPriceInfo_V2");
+    static final String INDEX_URL = env("DATA_GO_KR_INDEX_URL",
+            "https://apis.data.go.kr/1160100/GetMarketIndexInfoService_V2/getStockMarketIndex_V2");
     private static final ObjectMapper JSON = new ObjectMapper();
     private static final TypeReference<Map<String, Object>> MAP = new TypeReference<>() {};
     private static final TypeReference<List<Map<String, Object>>> LIST = new TypeReference<>() {};
@@ -53,6 +56,11 @@ public class DataGoKrClient {
         this.http = http;
         this.clock = clock;
         this.calls = calls;
+    }
+
+    private static String env(String name, String fallback) {
+        String v = System.getenv(name);
+        return v == null || v.isBlank() ? fallback : v;
     }
 
     public boolean hasKey() {

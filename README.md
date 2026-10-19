@@ -167,7 +167,8 @@ scripts/db.sh down       # MariaDB 컨테이너 정지(데이터는 남는다. �
 | `npm run db:up` · `db:apply` · `db:down` · `db:shell` | MariaDB 컨테이너 |
 | `npm run logs` · `logs:backend` 등 | 로그 따라 보기(`core`·`ai`·`backend`·`frontend`) |
 | `npm test` · `test:core` · `test:ai` · `test:backend` · `build:frontend` | 테스트·빌드 |
-| `npm run ingest:daily` · `ingest:backfill` | 일일 수집 1회 실행 |
+| `npm run ingest:daily` · `ingest:backfill` | 일일 수집 1회 실행(`backend/.env.local` 적용) |
+| `npm run check:opendart` | OpenDART 키 점검(키는 출력하지 않음) |
 
 - 브라우저: **http://localhost:3100**
 - 로그는 `.tmp/logs/{core-service,ai-server,backend,frontend}.log`. 이미 떠 있는 포트는 건너뛴다.
